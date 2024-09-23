@@ -91,7 +91,7 @@ function useFakeGame(roomName: string): Immutable<GameRoom> | null {
         };
         setState({
             roomName,
-            gameState: TestRooms[roomName],
+            gameState: TestRooms[roomName](),
             stateVersion: 1,
             setGameState: makeSetGameState(1),
         });

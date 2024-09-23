@@ -1,5 +1,5 @@
 import { create } from "mutative";
-import { BiddingState, RoomPhase, SetupPlayer, StartedState } from "./gameState";
+import { BiddingState, RoomPhase, ScoringState, SetupPlayer, StartedState } from "./gameState";
 import { CARD_VALUES, PokerCard, Round, Suit, SUITS } from "./gameTypes";
 import { Immutable, shuffle } from "./utils";
 
@@ -35,26 +35,35 @@ export function makeInitialGame(players: Immutable<SetupPlayer[]>): Immutable<St
 }
 
 export function advanceRound(game: Immutable<BiddingState>): Immutable<StartedState> {
-    return create(game, (draft) => {
-        // update history bookkeeping for a new round
-        const roundIndex = draft.log.length;
-        if (roundIndex > 0) {
-            for (const p of draft.players) {
-                if (!p.token) throw new Error("can't advance round unless every player has a token!");
-                p.pastTokens.push(p.token);
-                p.token = null;
-            }
-        }
-        draft.log.push([]);
+    const [draft, finalize] = create(game);
 
-        const currentRound = draft.futureRounds.shift();
-        if (currentRound == null) {
-            throw new Error("todo: go to scoring");
-        }
-        // deal new community card(s)
-        draft.communityCards.push(...draft.deck.splice(0, currentRound.cards));
+    const currentRound = draft.futureRounds.shift();
+    if (currentRound == null) {
+        return {
+            phase: RoomPhase.SCORING,
+            players: game.players,
+            communityCards: game.communityCards,
+            deck: game.deck,
+            log: game.log,
+            revealIndex: 1,
+        };
+    }
 
-        // mint new tokens
-        draft.tokens = draft.players.map((_, i) => ({ index: i + 1, round: roundIndex }));
-    });
+    // update history bookkeeping for a new round
+    const roundIndex = draft.log.length;
+    if (roundIndex > 0) {
+        for (const p of draft.players) {
+            if (!p.token) throw new Error("can't advance round unless every player has a token!");
+            p.pastTokens.push(p.token);
+            p.token = null;
+        }
+    }
+    draft.log.push([]);
+
+    // deal new community card(s)
+    draft.communityCards.push(...draft.deck.splice(0, currentRound.cards));
+
+    // mint new tokens
+    draft.tokens = draft.players.map((_, i) => ({ index: i + 1, round: roundIndex }));
+    return finalize()
 }

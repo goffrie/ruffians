@@ -24,7 +24,7 @@ export function pokerHandLessThan(a: Immutable<PokerHand>, b: Immutable<PokerHan
 }
 
 export function scoreHand(inputHand: Cards): Immutable<PokerHand> {
-    if (inputHand.length !== 4) throw new Error("what game is this?");
+    if (inputHand.length !== 5) throw new Error("what game is this?");
     const hand = inputHand.toSorted((a, b) => {
         if (a.value === b.value) {
             return a.suit - b.suit;
@@ -33,10 +33,13 @@ export function scoreHand(inputHand: Cards): Immutable<PokerHand> {
     });
     const isFlush = hand.every((c) => c.suit === hand[0].suit);
     const isStraight = hand.every((c, i) => i === 0 || c.value === hand[i - 1].value + 1 || (/* Special case: ace counts as 1 for a straight */ c.value === CardValue.Ace && hand[i - 1].value === CardValue.Four));
-    if (isFlush && isStraight) {
+    const straightValue = isStraight ? (
+        hand[4].value === CardValue.Ace && hand[3].value === CardValue.Four ? CardValue.Four : hand[4].value
+     ) : null;
+    if (isFlush && straightValue != null) {
         // Straight flush and/or royal flush
         // i am obliged to consider a royal flush to be a special case of a straight flush that doesn't require extra handling
-        return { kind: HandKind.StraightFlush, order: [hand[4].value] };
+        return { kind: HandKind.StraightFlush, order: [straightValue] };
     }
     // why is this spelled out?
     let pair: CardValue | undefined, secondPair, triple, quad;
@@ -61,8 +64,8 @@ export function scoreHand(inputHand: Cards): Immutable<PokerHand> {
     if (isFlush) {
         return { kind: HandKind.Flush, order: hand.reverse().map((c) => c.value) }
     }
-    if (isStraight) {
-        return { kind: HandKind.Straight, order: [hand[4].value] };
+    if (straightValue != null) {
+        return { kind: HandKind.Straight, order: [straightValue] };
     }
     if (triple) {
         const kicker = hand.filter((c) => c.value !== triple);
@@ -78,4 +81,24 @@ export function scoreHand(inputHand: Cards): Immutable<PokerHand> {
         return { kind: HandKind.Pair, order: [pair, kicker[2].value, kicker[1].value, kicker[0].value] };
     }
     return { kind: HandKind.HighCard, order: hand.reverse().map((c) => c.value) };
+}
+
+export function bestHandAmong(cards: Immutable<PokerCard[]>): Immutable<[PokerCard[], PokerHand]> {
+    if (cards.length < 5) throw new Error("no");
+    const picked: PokerCard[] = [];
+    let best: Immutable<[PokerCard[], PokerHand]> | null = null;
+    const dfs = (i: number) => {
+        if (picked.length === 5) {
+            const score = scoreHand(picked);
+            if (best == null || pokerHandLessThan(best[1], score)) best = [[...picked], score];
+            return;
+        }
+        if (cards.length - i < 5 - picked.length) return;
+        picked.push(cards[i]);
+        dfs(i + 1);
+        picked.pop();
+        dfs(i + 1);
+    };
+    dfs(0);
+    return best!;
 }

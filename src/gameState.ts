@@ -57,6 +57,7 @@ export interface BiddingState extends BaseStartedState {
 
 export interface ScoringState extends BaseStartedState {
     phase: RoomPhase.SCORING,
+    revealIndex: number, // 1-indexed
 }
 
 export type StartedState = BiddingState | ScoringState;
