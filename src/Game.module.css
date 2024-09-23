@@ -1,3 +1,11 @@
+.container {
+    display: flex;
+    flex-direction: row;
+}
+.container > div {
+    flex-grow: 1;
+}
+
 .card, .noCard {
     display: inline-block;
     margin: 4px;

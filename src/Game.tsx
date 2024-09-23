@@ -103,39 +103,43 @@ function BiddingGame(props: BiddingGameProps) {
     const inRoom = game.gameState.players.some((p) => p.name === username);
     const [, setMoveToken] = useMutateGame(game, moveTokenMutator);
     const [, setAdvanceRound] = useMutateGame(game, advanceRoundMutator);
-    return <>
+    return <div className={styles.container}>
         <div>
-            Round {game.gameState.log.length}
-            {!inRoom && " (You are spectating.)"}
-        </div>
-        {
-            game.gameState.players.map((p) => <div className={styles.player}>
-                {p.name}
-                {process.env.NODE_ENV !== "production" && p.name !== username && <button onClick={() => setUsername(p.name)}>Impersonate</button>}
-                {p.name === username && " (You)"}
-                <br />
-                {p.hand.map((c) => (!inRoom || p.name === username ? <Card card={c} /> : <NoCard />))}<br />
-                {p.pastTokens.map((t) => <TokenV token={t} disabled={true} />)}
-                {p.token ? <TokenV token={p.token} disabled={false} onClick={() => setMoveToken([username, username === p.name ? null : p.token, p.name])} /> : <NoToken />}
-            </div>)
-        }
-        <div className={styles.communityCards}>
             {
-                game.gameState.communityCards.map((c) => <Card card={c} />)
-            }
-            {
-                Array.from({ length: game.gameState.futureRounds.reduce((c, r) => r.cards + c, 0) }).map(() => <NoCard />)
+                game.gameState.players.map((p) => <div className={styles.player}>
+                    {p.name}
+                    {process.env.NODE_ENV !== "production" && p.name !== username && <button onClick={() => setUsername(p.name)}>Impersonate</button>}
+                    {p.name === username && " (You)"}
+                    <br />
+                    {p.hand.map((c) => (!inRoom || p.name === username ? <Card card={c} /> : <NoCard />))}<br />
+                    {p.pastTokens.map((t) => <TokenV token={t} disabled={true} />)}
+                    {p.token ? <TokenV token={p.token} disabled={false} onClick={() => setMoveToken([username, username === p.name ? null : p.token, p.name])} /> : <NoToken />}
+                </div>)
             }
         </div>
-        <div className={styles.tokenPool}>
-            {
-                game.gameState.tokens.map((token) => token ? <TokenV token={token} disabled={false} onClick={() => setMoveToken([username, token, null])} /> : <NoToken />)
-            }
+        <div>
+            <div>
+                Round {game.gameState.log.length}
+                {!inRoom && " (You are spectating.)"}
+            </div>
+            <div className={styles.communityCards}>
+                {
+                    game.gameState.communityCards.map((c) => <Card card={c} />)
+                }
+                {
+                    Array.from({ length: game.gameState.futureRounds.reduce((c, r) => r.cards + c, 0) }).map(() => <NoCard />)
+                }
+            </div>
+            <div className={styles.tokenPool}>
+                {
+                    game.gameState.tokens.map((token) => token ? <TokenV token={token} disabled={false} onClick={() => setMoveToken([username, token, null])} /> : <NoToken />)
+                }
+            </div>
+            <button disabled={!inRoom || !game.gameState.tokens.every((t) => t == null)} onClick={() => setAdvanceRound(true)}>
+                {game.gameState.futureRounds.length === 0 ? "Finish" : "Next round"}
+            </button>
         </div>
-        <button disabled={!inRoom || !game.gameState.tokens.every((t) => t == null)} onClick={() => setAdvanceRound(true)}>
-            {game.gameState.futureRounds.length === 0 ? "Finish" : "Next round"}
-        </button>
-    </>;
+    </div>;
 }
 
 function setRevealIndexMutator(game: Immutable<ScoringState>, newRevealIndex: number): Immutable<ScoringState> {
@@ -161,41 +165,45 @@ function ScoringGame(props: ScoringGameProps) {
         playerScores.sort((p, q) => p.index - q.index);
         return playerScores.every((p, i) => i === 0 || !pokerHandLessThan(p.score, playerScores[i - 1].score));
     }, [players, handScores]);
-    return <>
+    return <div className={styles.container}>
         <div>
-            Scoring: {revealIndex} ({players[revealedPlayerIndex].name})
-        </div>
-        {
-            players.map((p, i) => <div className={`${styles.player} ${i === revealedPlayerIndex ? styles.highlightPlayer : ""}`}>
-                {p.name}
-                {p.name === username && " (You)"}
-                <br />
-                {p.hand.map((c) => (!inRoom || p.name === username || (p.token!.index <= revealIndex) ? <Card card={c} highlight={revealedPlayerBestHand.has(c)} /> : <NoCard />))}
-                {p.token!.index <= revealIndex && <div className={styles.handScore}>
-                    {formatScore(handScores[i][1])}
-                </div>}
-                <br />
-                {p.pastTokens.map((t) => <TokenV token={t} disabled={true} />)}
-                <TokenV token={p.token!} disabled={true} />
-            </div>)
-        }
-        <div className={styles.communityCards}>
             {
-                game.gameState.communityCards.map((c) => <Card card={c} highlight={revealedPlayerBestHand.has(c)} />)
+                players.map((p, i) => <div className={`${styles.player} ${i === revealedPlayerIndex ? styles.highlightPlayer : ""}`}>
+                    {p.name}
+                    {p.name === username && " (You)"}
+                    <br />
+                    {p.hand.map((c) => (!inRoom || p.name === username || (p.token!.index <= revealIndex) ? <Card card={c} highlight={revealedPlayerBestHand.has(c)} /> : <NoCard />))}
+                    {p.token!.index <= revealIndex && <div className={styles.handScore}>
+                        {formatScore(handScores[i][1])}
+                    </div>}
+                    <br />
+                    {p.pastTokens.map((t) => <TokenV token={t} disabled={true} />)}
+                    <TokenV token={p.token!} disabled={true} />
+                </div>)
             }
         </div>
-        {revealIndex < players.length && <button disabled={!inRoom} onClick={() => setRevealIndex(revealIndex + 1)}>
-            Reveal {revealIndex + 1} ({players.find((p) => p.token!.index === revealIndex + 1)?.name})
-        </button>}
-        {revealIndex === players.length && <>
-            <div className={styles.gameResult}>
-                {gameWon ? "You won this one!" : "You didn't wonnered."}
+        <div>
+            <div>
+                Scoring: {revealIndex} ({players[revealedPlayerIndex].name})
             </div>
-            <button onClick={() => setStartNewGame(true)}>
-                Next game
-            </button>
-        </>}
-    </>;
+            <div className={styles.communityCards}>
+                {
+                    game.gameState.communityCards.map((c) => <Card card={c} highlight={revealedPlayerBestHand.has(c)} />)
+                }
+            </div>
+            {revealIndex < players.length && <button disabled={!inRoom} onClick={() => setRevealIndex(revealIndex + 1)}>
+                Reveal {revealIndex + 1} ({players.find((p) => p.token!.index === revealIndex + 1)?.name})
+            </button>}
+            {revealIndex === players.length && <>
+                <div className={styles.gameResult}>
+                    {gameWon ? "You won this one!" : "You didn't wonnered."}
+                </div>
+                <button onClick={() => setStartNewGame(true)}>
+                    Next game
+                </button>
+            </>}
+        </div>
+    </div>;
 }
 
 const BREAK: Record<HandKind, number | null> = {
