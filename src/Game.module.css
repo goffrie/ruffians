@@ -5,6 +5,12 @@
 .container > div {
     flex-grow: 1;
 }
+.players {
+    max-width: 300px;
+}
+.heading {
+    margin: 16px 0;
+}
 
 .card, .noCard {
     display: inline-block;
@@ -24,7 +30,8 @@
 }
 
 .player {
-    padding: 16px;
+    margin: 16px;
+    padding: 8px;
     border-radius: 8px;
 }
 
@@ -33,6 +40,7 @@
 }
 
 .token, .noToken {
+    margin: 4px;
     width: 48px;
     height: 48px;
     border-radius: 24px;

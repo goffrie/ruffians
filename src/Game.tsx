@@ -49,15 +49,20 @@ function SetupGame(props: SetupGameProps) {
 
     const [, setStartGame] = useMutateGame(game, startGameMutator);
     const startGame = () => setStartGame(true);
-    return <>
-        <button className="startGame" disabled={!inRoom || game.gameState.players.length < 2} onClick={startGame}>Start game</button>
-        {
-            game.gameState.players.map((p) => <div className={styles.player}>{p.name}{p.name === username && <>{" "}<button onClick={leaveRoom}>Leave</button></>}</div>)
-        }
-        {
-            !inRoom && <button onClick={joinRoom}>Join</button>
-        }
-    </>;
+    return <div className={styles.container}>
+        <div className={styles.players}>
+            {
+                game.gameState.players.map((p) => <div className={styles.player}>{p.name}{p.name === username && <>{" "}<button onClick={leaveRoom}>Leave</button></>}</div>)
+            }
+            {
+                !inRoom && <button onClick={joinRoom}>Join</button>
+            }
+        </div>
+        <div>
+            <div className={styles.heading}>Creating game</div>
+            <button className="startGame" disabled={!inRoom || game.gameState.players.length < 2} onClick={startGame}>Start game</button>
+        </div>
+    </div>;
 }
 
 function moveTokenMutator(game: Immutable<BiddingState>, [username, token, from]: [string, Token | null, string | null]): Immutable<BiddingState> {
@@ -104,7 +109,7 @@ function BiddingGame(props: BiddingGameProps) {
     const [, setMoveToken] = useMutateGame(game, moveTokenMutator);
     const [, setAdvanceRound] = useMutateGame(game, advanceRoundMutator);
     return <div className={styles.container}>
-        <div>
+        <div className={styles.players}>
             {
                 game.gameState.players.map((p) => <div className={styles.player}>
                     {p.name}
@@ -118,7 +123,7 @@ function BiddingGame(props: BiddingGameProps) {
             }
         </div>
         <div>
-            <div>
+            <div className={styles.heading}>
                 Round {game.gameState.log.length}
                 {!inRoom && " (You are spectating.)"}
             </div>
@@ -166,7 +171,7 @@ function ScoringGame(props: ScoringGameProps) {
         return playerScores.every((p, i) => i === 0 || !pokerHandLessThan(p.score, playerScores[i - 1].score));
     }, [players, handScores]);
     return <div className={styles.container}>
-        <div>
+        <div className={styles.players}>
             {
                 players.map((p, i) => <div className={`${styles.player} ${i === revealedPlayerIndex ? styles.highlightPlayer : ""}`}>
                     {p.name}
@@ -183,7 +188,7 @@ function ScoringGame(props: ScoringGameProps) {
             }
         </div>
         <div>
-            <div>
+            <div className={styles.heading}>
                 Scoring: {revealIndex} ({players[revealedPlayerIndex].name})
             </div>
             <div className={styles.communityCards}>
