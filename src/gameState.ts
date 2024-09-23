@@ -1,7 +1,8 @@
-import { Token, PokerCard, Round } from "./gameTypes";
+import { Token, PokerCard, Round, DeckCard } from "./gameTypes";
 
 export enum RoomPhase {
     SETUP = 'setup',
+    RESOLVE_JOKERS = 'resolve_jokers',
     BIDDING = 'bidding',
     SCORING = 'scoring',
 };
@@ -10,25 +11,35 @@ export interface SetupPlayer {
     name: string,
 }
 
+export interface Config {
+    withJokers: boolean
+}
+
 export interface SetupState {
     phase: RoomPhase.SETUP,
     players: SetupPlayer[],
+    config: Config,
 }
 
 export const NEW_ROOM: SetupState = {
     phase: RoomPhase.SETUP,
     players: [],
+    config: { withJokers: false },
 };
 
-export interface StartedPlayer {
+export interface StartedPlayer<PlayerCard> {
     name: string,
-    hand: PokerCard[],
+    hand: PlayerCard[],
     pastTokens: Token[],
     token: Token | null,
 }
 
 // 0-indexed
 export type PlayerNumber = number;
+
+export interface JokerLogEntry {
+    player: PlayerNumber,
+}
 
 export interface RoundLogEntry {
     player: PlayerNumber,
@@ -43,23 +54,31 @@ export interface RoundLogEntry {
     },
 }
 
-export interface BaseStartedState {
-    players: StartedPlayer[],
-    communityCards: PokerCard[],
-    deck: PokerCard[],
-    log: RoundLogEntry[][],
+export interface BaseStartedState<PlayerCard> {
+    players: StartedPlayer<PlayerCard>[],
+    config: Config,
+    communityCards: PokerCard[][],
+    deck: DeckCard[],
+    jokerLog: JokerLogEntry[],
 }
 
-export interface BiddingState extends BaseStartedState {
-    phase: RoomPhase.BIDDING,
-    tokens: (Token | null)[],
+export interface ResolveJokersState extends BaseStartedState<DeckCard | DeckCard[]> {
+    phase: RoomPhase.RESOLVE_JOKERS,
     futureRounds: Round[],
 }
 
-export interface ScoringState extends BaseStartedState {
+export interface BiddingState extends BaseStartedState<PokerCard> {
+    phase: RoomPhase.BIDDING,
+    tokens: (Token | null)[],
+    futureRounds: Round[],
+    log: RoundLogEntry[][],
+}
+
+export interface ScoringState extends BaseStartedState<PokerCard> {
     phase: RoomPhase.SCORING,
+    log: RoundLogEntry[][],
     revealIndex: number, // 1-indexed
 }
 
-export type StartedState = BiddingState | ScoringState;
+export type StartedState = ResolveJokersState | BiddingState | ScoringState;
 export type RoomState = SetupState | StartedState;

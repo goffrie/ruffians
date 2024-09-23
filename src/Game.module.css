@@ -12,6 +12,11 @@
     margin: 16px 0;
 }
 
+.communityCards, .hand {
+    display: flex;
+    flex-direction: row;
+}
+
 .card, .noCard {
     display: inline-block;
     margin: 4px;
@@ -36,6 +41,15 @@
 }
 .cardHighlight {
     outline: 2px dashed white;
+}
+.cardClickable {
+    box-shadow: 0 0 2px 2px lightblue;
+    cursor: pointer;
+}
+
+.cardStack {
+    display: flex;
+    flex-direction: column;
 }
 
 .player {

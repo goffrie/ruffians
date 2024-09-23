@@ -1,7 +1,7 @@
 import { GameRoom, useGame, useMutateGame } from "./gameHook";
-import { advanceRound, makeDeck, makeInitialGame } from "./gameImpl";
-import { BiddingState, RoomPhase, RoomState, RoundLogEntry, ScoringState, SetupState, StartedPlayer, StartedState } from "./gameState";
-import { CardValue, PokerCard, Suit, Token } from "./gameTypes";
+import { advanceRound, makeInitialGame, maybeResolveJokers } from "./gameImpl";
+import { BiddingState, JokerLogEntry, ResolveJokersState, RoomPhase, RoomState, RoundLogEntry, ScoringState, SetupState, StartedPlayer, StartedState } from "./gameState";
+import { CardValue, DeckCard, Suit, Token } from "./gameTypes";
 import { deepEqual, Immutable } from "./utils";
 import styles from "./Game.module.css";
 import { create } from "mutative";
@@ -19,12 +19,13 @@ export function Game(props: Props) {
         case RoomPhase.SETUP:
             // https://github.com/microsoft/TypeScript/issues/18758
             return <SetupGame username={username} game={{ ...game, gameState: game.gameState }} />;
+        case RoomPhase.RESOLVE_JOKERS:
+            return <ResolveJokersGame username={username} setUsername={setUsername} game={{ ...game, gameState: game.gameState }} />;
         case RoomPhase.BIDDING:
             return <BiddingGame username={username} setUsername={setUsername} game={{ ...game, gameState: game.gameState }} />;
         case RoomPhase.SCORING:
             return <ScoringGame username={username} game={{ ...game, gameState: game.gameState }} />;
     }
-    return <div>todo</div>;
 }
 
 type SetupGameProps = { username: string, game: Immutable<GameRoom<SetupState>> };
@@ -35,8 +36,11 @@ function joinRoomMutator(game: Immutable<SetupState>, username: string): Immutab
 function leaveRoomMutator(game: Immutable<SetupState>, username: string): Immutable<SetupState> {
     return { ...game, players: game.players.filter((p) => p.name !== username) };
 }
+function withJokersMutator(game: Immutable<SetupState>, withJokers: boolean): Immutable<SetupState> {
+    return { ...game, config: { ...game.config, withJokers } };
+}
 function startGameMutator(game: Immutable<SetupState>): Immutable<StartedState> {
-    return makeInitialGame(game.players);
+    return makeInitialGame(game.players, game.config);
 }
 function SetupGame(props: SetupGameProps) {
     const { username, game } = props;
@@ -45,6 +49,8 @@ function SetupGame(props: SetupGameProps) {
     const [, setJoinRoom] = useMutateGame(game, joinRoomMutator);
     const [, setLeaveRoom] = useMutateGame(game, leaveRoomMutator);
     const joinRoom = () => setJoinRoom(username);
+
+    const [withJokersMutation, setWithJokers] = useMutateGame(game, withJokersMutator);
 
     const [, setStartGame] = useMutateGame(game, startGameMutator);
     const startGame = () => setStartGame(true);
@@ -59,7 +65,8 @@ function SetupGame(props: SetupGameProps) {
         </div>
         <div>
             <div className={styles.heading}>Creating game</div>
-            <button className="startGame" disabled={!inRoom || game.gameState.players.length < 2} onClick={startGame}>Start game</button>
+            <input type="checkbox" checked={withJokersMutation ?? game.gameState.config.withJokers} onChange={(e) => setWithJokers(e.target.checked)} name="with_jokers" /> <label htmlFor="with_jokers">Include jokers in the deck</label><br />
+            <button className="startGame" disabled={!inRoom || game.gameState.players.length < 2 || (withJokersMutation != null)} onClick={startGame}>Start game</button>
         </div>
     </div>;
 }
@@ -114,21 +121,25 @@ function advanceRoundMutator(game: Immutable<BiddingState>): Immutable<RoomState
     return advanceRound(game);
 }
 
-function killGameMutator(game: Immutable<BiddingState>): Immutable<SetupState> {
-    return {
-        phase: RoomPhase.SETUP,
-        players: game.players.map((p) => ({ name: p.name })),
-    };
+function selectCardMutator(game: Immutable<ResolveJokersState>, [username, card, index]: [string, DeckCard, number]): Immutable<StartedState> {
+    return maybeResolveJokers(create(game, (draft) => {
+        const player = draft.players.find((p) => p.name === username);
+        if (!player) return;
+        const stackIndex = player.hand.findIndex((cards) => cards instanceof Array);
+        if (stackIndex === -1) return;
+        if (!deepEqual((player.hand[stackIndex] as Immutable<DeckCard[]>)[index], card)) return;
+        player.hand[stackIndex] = card;
+    }));
 }
 
-type BiddingGameProps = { username: string, setUsername: (name: string) => void, game: Immutable<GameRoom<BiddingState>> };
-function BiddingGame(props: BiddingGameProps) {
+type ResolveJokersGameProps = { username: string, setUsername: (name: string) => void, game: Immutable<GameRoom<ResolveJokersState>> };
+function ResolveJokersGame(props: ResolveJokersGameProps) {
     const { username, setUsername, game } = props;
     const inRoom = game.gameState.players.some((p) => p.name === username);
-    const [, setMoveToken] = useMutateGame(game, moveTokenMutator);
-    const [, setAdvanceRound] = useMutateGame(game, advanceRoundMutator);
-    const [, setKillGame] = useMutateGame(game, killGameMutator);
-    const [reallyKillGame, setReallyKillGame] = useState(false);
+    const [, setSelectCard] = useMutateGame(game, selectCardMutator);
+    const selectCard = (card: DeckCard, index: number) => {
+        setSelectCard([username, card, index]);
+    };
     return <div className={styles.container}>
         <div className={styles.players}>
             {
@@ -137,7 +148,39 @@ function BiddingGame(props: BiddingGameProps) {
                     {process.env.NODE_ENV !== "production" && p.name !== username && <button onClick={() => setUsername(p.name)}>Impersonate</button>}
                     {p.name === username && " (You)"}
                     <br />
-                    {p.hand.map((c) => (!inRoom || p.name === username ? <Card card={c} /> : <NoCard />))}<br />
+                    <div className={styles.hand}>
+                        {p.hand.map((c) => (!inRoom || p.name === username ? (c instanceof Array ? <CardStack cards={c} onClick={p.name === username ? selectCard : undefined} /> : <Card card={c} />) : <NoCard />))}<br />
+                    </div>
+                </div>)
+            }
+        </div>
+        <div>
+            <div className={styles.heading}>
+                Waiting for players to choose their cards{' '}
+                {inRoom && <KillGameButton game={game} />}
+            </div>
+            <GameLog players={game.gameState.players} jokerLog={game.gameState.jokerLog} log={[]} />
+        </div>
+    </div>;
+}
+
+type BiddingGameProps = { username: string, setUsername: (name: string) => void, game: Immutable<GameRoom<BiddingState>> };
+function BiddingGame(props: BiddingGameProps) {
+    const { username, setUsername, game } = props;
+    const inRoom = game.gameState.players.some((p) => p.name === username);
+    const [, setMoveToken] = useMutateGame(game, moveTokenMutator);
+    const [, setAdvanceRound] = useMutateGame(game, advanceRoundMutator);
+    return <div className={styles.container}>
+        <div className={styles.players}>
+            {
+                game.gameState.players.map((p) => <div className={styles.player}>
+                    {p.name}
+                    {process.env.NODE_ENV !== "production" && p.name !== username && <button onClick={() => setUsername(p.name)}>Impersonate</button>}
+                    {p.name === username && " (You)"}
+                    <br />
+                    <div className={styles.hand}>
+                        {p.hand.map((c) => (!inRoom || p.name === username ? <Card card={c} /> : <NoCard />))}<br />
+                    </div>
                     {p.pastTokens.map((t) => <TokenV token={t} disabled={true} />)}
                     {p.token ? <TokenV token={p.token} disabled={false} onClick={() => setMoveToken([username, username === p.name ? null : p.token, p.name])} /> : <NoToken />}
                 </div>)
@@ -147,18 +190,11 @@ function BiddingGame(props: BiddingGameProps) {
             <div className={styles.heading}>
                 Round {game.gameState.log.length}{' '}
                 {!inRoom && "(You are spectating.)"}
-                {inRoom && <button onClick={() => {
-                    if (reallyKillGame) {
-                        setKillGame(true);
-                    } else {
-                        setReallyKillGame(true);
-                    }
-                }}>{reallyKillGame ? "Really go back to game setup" : "Go back to game setup"}</button>}
-                {reallyKillGame && <button onClick={() => setReallyKillGame(false)}>Just kidding</button>}
+                {inRoom && <KillGameButton game={game} />}
             </div>
             <div className={styles.communityCards}>
                 {
-                    game.gameState.communityCards.map((c) => <Card card={c} />)
+                    game.gameState.communityCards.map((c) => c instanceof Array ? <CardStack cards={c} /> : <Card card={c} />)
                 }
                 {
                     Array.from({ length: game.gameState.futureRounds.reduce((c, r) => r.cards + c, 0) }).map(() => <NoCard />)
@@ -172,9 +208,32 @@ function BiddingGame(props: BiddingGameProps) {
             <button disabled={!inRoom || !game.gameState.tokens.every((t) => t == null)} onClick={() => setAdvanceRound(true)}>
                 {game.gameState.futureRounds.length === 0 ? "Finish" : "Next round"}
             </button>
-            <GameLog players={game.gameState.players} log={game.gameState.log} />
+            <GameLog players={game.gameState.players} jokerLog={game.gameState.jokerLog} log={game.gameState.log} />
         </div>
     </div>;
+}
+
+function killGameMutator(game: Immutable<StartedState>): Immutable<SetupState> {
+    return {
+        phase: RoomPhase.SETUP,
+        players: game.players.map((p) => ({ name: p.name })),
+        config: game.config,
+    };
+}
+
+function KillGameButton({ game }: { game: Immutable<GameRoom<StartedState>> }) {
+    const [, setKillGame] = useMutateGame(game, killGameMutator);
+    const [reallyKillGame, setReallyKillGame] = useState(false);
+    return <>
+        <button onClick={() => {
+            if (reallyKillGame) {
+                setKillGame(true);
+            } else {
+                setReallyKillGame(true);
+            }
+        }}>{reallyKillGame ? "Really go back to game setup" : "Go back to game setup"}</button>
+        {reallyKillGame && <button onClick={() => setReallyKillGame(false)}>Just kidding</button>}
+    </>;
 }
 
 function setRevealIndexMutator(game: Immutable<ScoringState>, newRevealIndex: number): Immutable<ScoringState> {
@@ -182,7 +241,7 @@ function setRevealIndexMutator(game: Immutable<ScoringState>, newRevealIndex: nu
 }
 
 function startNewGameMutator(game: Immutable<ScoringState>): Immutable<StartedState> {
-    return makeInitialGame(game.players);
+    return makeInitialGame(game.players, game.config);
 }
 
 type ScoringGameProps = { username: string, game: Immutable<GameRoom<ScoringState>> };
@@ -207,7 +266,9 @@ function ScoringGame(props: ScoringGameProps) {
                     {p.name}
                     {p.name === username && " (You)"}
                     <br />
-                    {p.hand.map((c) => (!inRoom || p.name === username || (p.token!.index <= revealIndex) ? <Card card={c} highlight={revealedPlayerBestHand.has(c)} /> : <NoCard />))}
+                    <div className={styles.hand}>
+                        {p.hand.map((c) => (!inRoom || p.name === username || (p.token!.index <= revealIndex) ? <Card card={c} highlight={revealedPlayerBestHand.has(c)} /> : <NoCard />))}
+                    </div>
                     {p.token!.index <= revealIndex && <div className={styles.handScore}>
                         {formatScore(handScores[i][1])}
                     </div>}
@@ -223,7 +284,7 @@ function ScoringGame(props: ScoringGameProps) {
             </div>
             <div className={styles.communityCards}>
                 {
-                    game.gameState.communityCards.map((c) => <Card card={c} highlight={revealedPlayerBestHand.has(c)} />)
+                    game.gameState.communityCards.map((c) => <CardStack cards={c} highlight={revealedPlayerBestHand} />)
                 }
             </div>
             {revealIndex < players.length && <button disabled={!inRoom} onClick={() => setRevealIndex(revealIndex + 1)}>
@@ -237,31 +298,41 @@ function ScoringGame(props: ScoringGameProps) {
                     Next game
                 </button>
             </>}
-            <GameLog players={game.gameState.players} log={game.gameState.log} />
+            <GameLog players={game.gameState.players} jokerLog={game.gameState.jokerLog} log={game.gameState.log} />
         </div>
     </div>;
 }
 
-function GameLog({ players, log }: { players: Immutable<StartedPlayer[]>, log: Immutable<RoundLogEntry[][]> }) {
-    return <div className={styles.log}>
-        {log.map((roundLog, roundIndex) => <div className={styles.roundLog} key={roundIndex}>
-            <h2>Round {roundIndex + 1}</h2>
-            {roundLog.map((logEntry, i) => <div className={styles.roundLogEntry} key={i}>
-                <span className={styles.playerName}>{players[logEntry.player].name}</span>
-                {
-                    "take" in logEntry.action ?
-                        <> took the <SmallToken token={logEntry.action.take} /> from{' '}
-                            {
-                                logEntry.action.from == null ? <>the middle</> : <span className={styles.playerName}>{players[logEntry.action.from].name}</span>
-                            }
-                            {
-                                logEntry.action.put != null && <> and returned the <SmallToken token={logEntry.action.put} /></>
-                            }</>
-                        : <> returned the <SmallToken token={logEntry.action.put} /></>
-                }
+function GameLog({ players, jokerLog, log }: { players: Immutable<StartedPlayer<object>[]>, jokerLog: Immutable<JokerLogEntry[]>, log: Immutable<RoundLogEntry[][]> }) {
+    return <>
+        <div className={styles.log}>
+            {jokerLog.length > 0 &&
+                <div className={styles.roundLog}>
+                    <h2>Setup</h2>
+                    {jokerLog.map((entry) => <div className={styles.roundLogEntry}>
+                        <span className={styles.playerName}>{players[entry.player].name}</span> discarded a joker
+                    </div>)}
+                </div>
+            }
+            {log.map((roundLog, roundIndex) => <div className={styles.roundLog} key={roundIndex}>
+                <h2>Round {roundIndex + 1}</h2>
+                {roundLog.map((logEntry, i) => <div className={styles.roundLogEntry} key={i}>
+                    <span className={styles.playerName}>{players[logEntry.player].name}</span>
+                    {
+                        "take" in logEntry.action ?
+                            <> took the <SmallToken token={logEntry.action.take} /> from{' '}
+                                {
+                                    logEntry.action.from == null ? <>the middle</> : <span className={styles.playerName}>{players[logEntry.action.from].name}</span>
+                                }
+                                {
+                                    logEntry.action.put != null && <> and returned the <SmallToken token={logEntry.action.put} /></>
+                                }</>
+                            : <> returned the <SmallToken token={logEntry.action.put} /></>
+                    }
+                </div>)}
             </div>)}
-        </div>)}
-    </div>
+        </div>
+    </>;
 }
 
 const BREAK: Record<HandKind, number | null> = {
@@ -314,12 +385,26 @@ const UNICODE_SUITS = {
     [Suit.Spades]: "♠",
 };
 
-function Card(props: { card: PokerCard, highlight?: boolean }) {
-    const { card, highlight } = props;
-    return <div className={`${styles.card} ${highlight ? styles.cardHighlight : ""}`}>
-        {formatCardValue(card.value)}
-        <br />
-        <span className={(card.suit === Suit.Diamonds || card.suit === Suit.Hearts) ? styles.redSuit : styles.blackSuit}>{UNICODE_SUITS[card.suit]}</span>
+function Card(props: { card: Immutable<DeckCard>, onClick?: () => void, highlight?: boolean }) {
+    const { card, onClick, highlight } = props;
+    return <div className={`${styles.card} ${highlight ? styles.cardHighlight : ""} ${onClick != null ? styles.cardClickable : ""}`} onClick={onClick}>
+        {
+            "joker" in card ?
+                <>!</>
+                :
+                <>
+                    {formatCardValue(card.value)}
+                    <br />
+                    <span className={(card.suit === Suit.Diamonds || card.suit === Suit.Hearts) ? styles.redSuit : styles.blackSuit}>{UNICODE_SUITS[card.suit]}</span>
+                </>
+        }
+    </div>;
+}
+
+function CardStack(props: { cards: Immutable<DeckCard[]>, onClick?: (card: DeckCard, index: number) => void, highlight?: Set<Immutable<DeckCard>> }) {
+    const { cards, onClick, highlight } = props;
+    return <div className={styles.cardStack}>
+        {cards.map((card, i) => <Card card={card} onClick={onClick != null ? () => onClick(card, i) : undefined} highlight={highlight?.has(card)} />)}
     </div>;
 }
 

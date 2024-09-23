@@ -1,10 +1,12 @@
 import { create } from "mutative";
-import { BiddingState, RoomPhase, ScoringState, SetupPlayer, StartedState } from "./gameState";
-import { CARD_VALUES, PokerCard, Round, Suit, SUITS } from "./gameTypes";
+import { BiddingState, Config, ResolveJokersState, RoomPhase, SetupPlayer, StartedPlayer, StartedState } from "./gameState";
+import { CARD_VALUES, DeckCard, PokerCard, Round, SUITS } from "./gameTypes";
 import { Immutable, shuffle } from "./utils";
 
-export function makeDeck(): PokerCard[] {
-    return shuffle(SUITS.flatMap((suit) => CARD_VALUES.map((value) => ({ suit, value }))));
+export function makeDeck(withJokers: boolean): DeckCard[] {
+    const baseDeck: DeckCard[] = SUITS.flatMap((suit) => CARD_VALUES.map((value) => ({ suit, value })));
+    if (withJokers) baseDeck.push(...Array.from({ length: 2 }).map((_, i) => ({ joker: i })));
+    return shuffle(baseDeck);
 }
 
 const DEFAULT_GAME: Immutable<Round[]> = [
@@ -14,10 +16,11 @@ const DEFAULT_GAME: Immutable<Round[]> = [
     { cards: 1 },
 ]
 
-export function makeInitialGame(players: Immutable<SetupPlayer[]>): Immutable<StartedState> {
-    const deck = makeDeck();
-    const state: Immutable<BiddingState> = {
-        phase: RoomPhase.BIDDING,
+export function makeInitialGame(players: Immutable<SetupPlayer[]>, config: Config): Immutable<StartedState> {
+    const deck = makeDeck(config.withJokers);
+    const state: Immutable<ResolveJokersState> = {
+        phase: RoomPhase.RESOLVE_JOKERS,
+        config,
         players: players.map((p) => ({
             name: p.name,
             // deal two cards to each player
@@ -28,10 +31,30 @@ export function makeInitialGame(players: Immutable<SetupPlayer[]>): Immutable<St
         communityCards: [],
         deck,
         futureRounds: DEFAULT_GAME,
-        log: [],
-        tokens: [],
+        jokerLog: [],
     };
-    return advanceRound(state);
+    return maybeResolveJokers(state);
+}
+
+function allHandsResolved(players: Immutable<StartedPlayer<DeckCard | DeckCard[]>[]>): players is Immutable<StartedPlayer<PokerCard>[]> {
+    return players.every((p) => p.hand.every((c) => !(c instanceof Array) && !("joker" in c)));
+}
+
+export function maybeResolveJokers(game: Immutable<ResolveJokersState>): Immutable<StartedState> {
+    if (allHandsResolved(game.players)) {
+        return advanceRound({ ...game, players: game.players, phase: RoomPhase.BIDDING, tokens: [], log: [] });
+    }
+    return create(game, (draft) => {
+        draft.players.forEach((player, playerIx) => {
+            if (player.hand.every((obj) => !(obj instanceof Array))) {
+                const ix = player.hand.findIndex((obj) => "joker" in obj);
+                if (ix !== -1) {
+                    player.hand[ix] = draft.deck.splice(0, 2);
+                    draft.jokerLog.push({ player: playerIx });
+                }
+            }
+        });
+    });
 }
 
 export function advanceRound(game: Immutable<BiddingState>): Immutable<StartedState> {
@@ -41,9 +64,11 @@ export function advanceRound(game: Immutable<BiddingState>): Immutable<StartedSt
     if (currentRound == null) {
         return {
             phase: RoomPhase.SCORING,
+            config: game.config,
             players: game.players,
             communityCards: game.communityCards,
             deck: game.deck,
+            jokerLog: game.jokerLog,
             log: game.log,
             revealIndex: 1,
         };
@@ -61,7 +86,20 @@ export function advanceRound(game: Immutable<BiddingState>): Immutable<StartedSt
     draft.log.push([]);
 
     // deal new community card(s)
-    draft.communityCards.push(...draft.deck.splice(0, currentRound.cards));
+    for (let i = 0; i < currentRound.cards; i += 1) {
+        const slot = [];
+        let cardsInSlot = 1;
+        while (cardsInSlot > 0) {
+            const draw = draft.deck.shift()!;
+            if ("joker" in draw) {
+                cardsInSlot += 1;
+            } else {
+                cardsInSlot -= 1;
+                slot.push(draw);
+            }
+        }
+        draft.communityCards.push(slot);
+    }
 
     // mint new tokens
     draft.tokens = draft.players.map((_, i) => ({ index: i + 1, round: roundIndex }));

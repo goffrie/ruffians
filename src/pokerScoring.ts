@@ -35,7 +35,7 @@ export function scoreHand(inputHand: Cards): Immutable<PokerHand> {
     const isStraight = hand.every((c, i) => i === 0 || c.value === hand[i - 1].value + 1 || (/* Special case: ace counts as 1 for a straight */ c.value === CardValue.Ace && hand[i - 1].value === CardValue.Four));
     const straightValue = isStraight ? (
         hand[4].value === CardValue.Ace && hand[3].value === CardValue.Four ? CardValue.Four : hand[4].value
-     ) : null;
+    ) : null;
     if (isFlush && straightValue != null) {
         // Straight flush and/or royal flush
         // i am obliged to consider a royal flush to be a special case of a straight flush that doesn't require extra handling
@@ -83,7 +83,7 @@ export function scoreHand(inputHand: Cards): Immutable<PokerHand> {
     return { kind: HandKind.HighCard, order: hand.reverse().map((c) => c.value) };
 }
 
-export function bestHandAmong(cards: Immutable<PokerCard[]>): Immutable<[PokerCard[], PokerHand]> {
+export function bestHandAmong(cards: Immutable<(PokerCard | PokerCard[])[]>): Immutable<[PokerCard[], PokerHand]> {
     if (cards.length < 5) throw new Error("no");
     const picked: PokerCard[] = [];
     let best: Immutable<[PokerCard[], PokerHand]> | null = null;
@@ -94,9 +94,17 @@ export function bestHandAmong(cards: Immutable<PokerCard[]>): Immutable<[PokerCa
             return;
         }
         if (cards.length - i < 5 - picked.length) return;
-        picked.push(cards[i]);
-        dfs(i + 1);
-        picked.pop();
+        if (cards[i] instanceof Array) {
+            for (const card of cards[i]) {
+                picked.push(card);
+                dfs(i + 1);
+                picked.pop();
+            }
+        } else {
+            picked.push(cards[i]);
+            dfs(i + 1);
+            picked.pop();
+        }
         dfs(i + 1);
     };
     dfs(0);

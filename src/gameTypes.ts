@@ -42,6 +42,8 @@ export type PokerCard = {
     value: CardValue,
 };
 
+export type DeckCard = PokerCard | { joker: number };
+
 export type Token = {
     index: number,
     // 0-indexed
