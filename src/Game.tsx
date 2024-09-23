@@ -181,7 +181,7 @@ function BiddingGame(props: BiddingGameProps) {
                     <div className={styles.hand}>
                         {p.hand.map((c) => (!inRoom || p.name === username ? <Card card={c} /> : <NoCard />))}<br />
                     </div>
-                    {p.pastTokens.map((t) => <TokenV token={t} disabled={true} />)}
+                    {p.pastTokens.map((t) => <TokenV token={t} past={true} disabled={true} />)}
                     {p.token ? <TokenV token={p.token} disabled={false} onClick={() => setMoveToken([username, username === p.name ? null : p.token, p.name])} /> : <NoToken />}
                 </div>)
             }
@@ -413,9 +413,9 @@ function NoCard() {
 }
 
 // how 2 naming?
-function TokenV(props: { token: Token, disabled: boolean, onClick?: () => void }) {
-    const { token, disabled, onClick } = props;
-    return <button className={styles.token} disabled={disabled} onClick={onClick}>{token.index}</button>;
+function TokenV(props: { token: Token, disabled?: boolean, past?: boolean, onClick?: () => void }) {
+    const { token, disabled, past, onClick } = props;
+    return <button className={`${styles.token} ${past ? styles.pastToken : ""}`} disabled={disabled} onClick={onClick}>{token.index}</button>;
 }
 
 function SmallToken({ token }: { token: Token }) {
