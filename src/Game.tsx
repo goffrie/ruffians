@@ -100,10 +100,13 @@ function BiddingGame(props: BiddingGameProps) {
     const [, setMoveToken] = useMutateGame(game, moveTokenMutator);
     const [, setAdvanceRound] = useMutateGame(game, advanceRoundMutator);
     return <>
+        <div>
+            Round {game.gameState.log.length}
+        </div>
         {
             game.gameState.players.map((p) => <div className={styles.player}>
                 {p.name}{process.env.NODE_ENV !== "production" && p.name !== username && <button onClick={() => setUsername(p.name)}>Impersonate</button>}<br />
-                {p.hand.map((c) => <Card card={c} />)}<br />
+                {p.hand.map((c) => (!inRoom || p.name === username ? <Card card={c} /> : <NoCard />))}<br />
                 {p.pastTokens.map((t) => <TokenV token={t} disabled={true} />)}
                 {p.token ? <TokenV token={p.token} disabled={false} onClick={() => setMoveToken([username, username === p.name ? null : p.token, p.name])} /> : <NoToken />}
             </div>)
@@ -122,18 +125,31 @@ function BiddingGame(props: BiddingGameProps) {
             }
         </div>
         <button disabled={!game.gameState.tokens.every((t) => t == null)} onClick={() => setAdvanceRound(true)}>
-            Next round
+            {game.gameState.futureRounds.length === 0 ? "Finish" : "Next round"}
         </button>
     </>;
 }
 
+const STRING_VALUES: Record<number, string> = {
+    [CardValue.Ace]: "A",
+    [CardValue.Jack]: "J",
+    [CardValue.Queen]: "Q",
+    [CardValue.King]: "K",
+};
+const UNICODE_SUITS = {
+    [Suit.Diamonds]: "♦",
+    [Suit.Hearts]: "♥",
+    [Suit.Clubs]: "♣",
+    [Suit.Spades]: "♠",
+};
+
 function Card(props: { card: PokerCard }) {
     const { card } = props;
-    return <div className={styles.card}>{CardValue[card.value]} of {Suit[card.suit]}</div>;
+    return <div className={styles.card}>{STRING_VALUES[card.value] ?? card.value.toString()}<br />{UNICODE_SUITS[card.suit]}</div>;
 }
 
 function NoCard() {
-    return <div className={styles.noCard}>?? of ??</div>
+    return <div className={styles.noCard}></div>
 }
 
 // how 2 naming?

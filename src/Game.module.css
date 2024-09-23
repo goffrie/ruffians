@@ -1,8 +1,11 @@
 .card, .noCard {
     display: inline-block;
     margin: 4px;
-    width: 64px;
-    height: 64px;
+    width: 24px;
+    height: 40px;
+    text-align: center;
+    line-height: 20px;
+    padding: 4px;
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     /* i do not understand css */

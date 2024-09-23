@@ -7,8 +7,8 @@ export enum Suit {
 export const SUITS: readonly Suit[] = [Suit.Clubs, Suit.Diamonds, Suit.Hearts, Suit.Spades];
 
 export enum CardValue {
-    Ace = 1,
-    Two,
+    Ace = 14,
+    Two = 2,
     Three,
     Four,
     Five,
