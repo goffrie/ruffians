@@ -31,9 +31,14 @@ function useRoomName(): [string | null, ((roomName: string | null) => void)] {
 function App() {
   const [username, saveUsername] = useUsername();
   const [roomName, setRoomName] = useRoomName();
-  if (!username || !roomName) {
+  const [inGame, setInGame] = useState(Boolean(username && roomName));
+  if (!username || !roomName || !inGame) {
+    if (inGame) {
+      setInGame(false); // bad practice
+    }
     const newRoom = async () => {
       setRoomName((await callMakeRoom(NEW_ROOM)).room);
+      setInGame(true);
     };
     return (
       <header className="App-header">
@@ -44,6 +49,9 @@ function App() {
         </div>
         {!roomName && <>
           <button disabled={!username} onClick={newRoom}>New game</button>
+        </>}
+        {roomName && <>
+          <button onClick={() => setInGame(true)}>Join game ({roomName})</button>
         </>}
       </header>
     );
