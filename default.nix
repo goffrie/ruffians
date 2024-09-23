@@ -16,7 +16,7 @@ pkgs.mkYarnPackage {
   '';
   installPhase = ''
     mkdir $out
-    cp -r deps/ruffians/build/{index.html,favicon*.ico,robots.txt,static} $out/
+    cp -r deps/ruffians/build/{index.html,favicon*.*,robots.txt,static} $out/
     for map in deps/ruffians/build/static/js/*.map; do
       jq -c '.sources |= map (sub(".*/node_modules"; "node_modules"))' < $map > $out/static/js/$(basename $map)
     done
