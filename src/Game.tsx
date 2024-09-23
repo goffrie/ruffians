@@ -273,7 +273,7 @@ const BREAK: Record<HandKind, number | null> = {
     [HandKind.Pair]: 1,
     [HandKind.TwoPair]: 2,
     [HandKind.ThreeOfAKind]: 1,
-    [HandKind.FullHouse]: 2,
+    [HandKind.FullHouse]: null,
 }
 const HAND_KIND_NAME: Record<HandKind, string> = {
     [HandKind.Flush]: "Flush",
