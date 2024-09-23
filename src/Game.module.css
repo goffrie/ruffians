@@ -1,0 +1,46 @@
+.card, .noCard {
+    display: inline-block;
+    margin: 4px;
+    width: 64px;
+    height: 64px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    /* i do not understand css */
+    vertical-align: top;
+}
+
+.player {
+    border: 1px solid white;
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.token, .noToken {
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+    display: inline-block;
+    box-sizing: border-box;
+    font: inherit;
+    font-size: 20px;
+    text-align: center;
+    /* i do not understand css */
+    vertical-align: top;
+}
+.token {
+    border: 2px solid white;
+
+    background: none;
+    color: inherit;
+    padding: 0;
+}
+.token:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+}
+.token:active:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.noToken {
+    border: 2px dashed white;
+}

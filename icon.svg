@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="24"
+   height="24"
+   viewBox="0 0 6.3499998 6.3499999"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   sodipodi:docname="icon.svg"
+   inkscape:export-filename="public\logo512.png"
+   inkscape:export-xdpi="2048"
+   inkscape:export-ydpi="2048"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="2.8284271"
+     inkscape:cx="23.157747"
+     inkscape:cy="6.1871843"
+     inkscape:window-width="1771"
+     inkscape:window-height="1494"
+     inkscape:window-x="1735"
+     inkscape:window-y="95"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#570773;fill-opacity:1;fill-rule:nonzero;stroke-width:0.4;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:0.905882;stop-color:#000000"
+       id="rect5362"
+       width="6.3499999"
+       height="6.3499999"
+       x="0"
+       y="0"
+       ry="0.79374999" />
+    <text
+       xml:space="preserve"
+       style="font-size:2.82222px;line-height:0.55;font-family:'Atkinson Hyperlegible';-inkscape-font-specification:'Atkinson Hyperlegible';fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke-width:0.4;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:0.905882;stop-color:#000000"
+       x="0.0029787084"
+       y="2.0916321"
+       id="text186"><tspan
+         sodipodi:role="line"
+         id="tspan184"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;font-family:Lexend;-inkscape-font-specification:Lexend;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke-width:0.399999"
+         x="0.0029787084"
+         y="2.0916321"
+         dx="0.092369117">the</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:Lexend;-inkscape-font-specification:Lexend;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke-width:0.399999"
+         x="0.0029787084"
+         y="3.9422929"
+         id="tspan1676"
+         dx="0.056154575">ruff</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:Lexend;-inkscape-font-specification:Lexend;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke-width:0.399999"
+         x="0.0029787084"
+         y="5.792954"
+         id="tspan1678"
+         dx="0.058465209">ıans</tspan></text>
+  </g>
+</svg>
