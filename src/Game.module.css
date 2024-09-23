@@ -16,17 +16,26 @@
     display: inline-block;
     margin: 4px;
     width: 24px;
-    height: 40px;
+    height: 32px;
     text-align: center;
-    line-height: 20px;
-    padding: 4px;
-    background-color: rgba(255, 255, 255, 0.1);
+    line-height: 16px;
+    padding: 8px 6px;
     border-radius: 8px;
     /* i do not understand css */
     vertical-align: top;
 }
+.noCard {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.card {
+    background-color: #fff;
+    color: #000;
+}
+.redSuit {
+    color: #e00;
+}
 .cardHighlight {
-    outline: 1px solid white;
+    outline: 2px dashed white;
 }
 
 .player {

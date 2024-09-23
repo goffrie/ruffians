@@ -263,7 +263,11 @@ const UNICODE_SUITS = {
 
 function Card(props: { card: PokerCard, highlight?: boolean }) {
     const { card, highlight } = props;
-    return <div className={`${styles.card} ${highlight ? styles.cardHighlight : ""}`}>{formatCardValue(card.value)}<br />{UNICODE_SUITS[card.suit]}</div>;
+    return <div className={`${styles.card} ${highlight ? styles.cardHighlight : ""}`}>
+        {formatCardValue(card.value)}
+        <br />
+        <span className={(card.suit === Suit.Diamonds || card.suit === Suit.Hearts) ? styles.redSuit : styles.blackSuit}>{UNICODE_SUITS[card.suit]}</span>
+    </div>;
 }
 
 function NoCard() {
