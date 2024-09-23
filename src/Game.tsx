@@ -6,7 +6,7 @@ import { deepEqual, Immutable } from "./utils";
 import styles from "./Game.module.css";
 import { create } from "mutative";
 import { bestHandAmong, HandKind, PokerHand, pokerHandLessThan } from "./pokerScoring";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 type Props = { username: string, setUsername: (name: string) => void, roomName: string };
 export function Game(props: Props) {
@@ -102,12 +102,21 @@ function advanceRoundMutator(game: Immutable<BiddingState>): Immutable<RoomState
     return advanceRound(game);
 }
 
+function killGameMutator(game: Immutable<BiddingState>): Immutable<SetupState> {
+    return {
+        phase: RoomPhase.SETUP,
+        players: game.players.map((p) => ({ name: p.name })),
+    };
+}
+
 type BiddingGameProps = { username: string, setUsername: (name: string) => void, game: Immutable<GameRoom<BiddingState>> };
 function BiddingGame(props: BiddingGameProps) {
     const { username, setUsername, game } = props;
     const inRoom = game.gameState.players.some((p) => p.name === username);
     const [, setMoveToken] = useMutateGame(game, moveTokenMutator);
     const [, setAdvanceRound] = useMutateGame(game, advanceRoundMutator);
+    const [, setKillGame] = useMutateGame(game, killGameMutator);
+    const [reallyKillGame, setReallyKillGame] = useState(false);
     return <div className={styles.container}>
         <div className={styles.players}>
             {
@@ -126,6 +135,14 @@ function BiddingGame(props: BiddingGameProps) {
             <div className={styles.heading}>
                 Round {game.gameState.log.length}
                 {!inRoom && " (You are spectating.)"}
+                {inRoom && <button onClick={() => {
+                    if (reallyKillGame) {
+                        setKillGame(true);
+                    } else {
+                        setReallyKillGame(true);
+                    }
+                }}>{reallyKillGame ? "Really go back to game setup" : "Go back to game setup"}</button>}
+                {reallyKillGame && <button onClick={() => setReallyKillGame(false)}>Just kidding</button>}
             </div>
             <div className={styles.communityCards}>
                 {
