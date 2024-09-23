@@ -1,6 +1,6 @@
 import { GameRoom, useGame, useMutateGame } from "./gameHook";
 import { advanceRound, makeDeck, makeInitialGame } from "./gameImpl";
-import { BiddingState, RoomPhase, RoomState, ScoringState, SetupState, StartedState } from "./gameState";
+import { BiddingState, RoomPhase, RoomState, RoundLogEntry, ScoringState, SetupState, StartedPlayer, StartedState } from "./gameState";
 import { CardValue, PokerCard, Suit, Token } from "./gameTypes";
 import { deepEqual, Immutable } from "./utils";
 import styles from "./Game.module.css";
@@ -66,30 +66,43 @@ function SetupGame(props: SetupGameProps) {
 
 function moveTokenMutator(game: Immutable<BiddingState>, [username, token, from]: [string, Token | null, string | null]): Immutable<BiddingState> {
     return create(game, (draft) => {
-        const toPlayer = draft.players.find((p) => p.name === username);
-        if (!toPlayer) return;
+        const toPlayerIndex = draft.players.findIndex((p) => p.name === username);
+        if (toPlayerIndex === -1) return;
+        const toPlayer = draft.players[toPlayerIndex];
+        const log = draft.log[draft.log.length - 1];
         const relinquish = () => {
             if (toPlayer.token) {
-                draft.tokens[toPlayer.token.index - 1] = toPlayer.token;
+                const t = toPlayer.token;
+                draft.tokens[toPlayer.token.index - 1] = t;
                 toPlayer.token = null;
+                return t;
             }
+            return null;
         }
         if (!token) {
-            relinquish();
+            const put = relinquish();
+            if (put) {
+                log.push({ player: toPlayerIndex, action: { put } });
+            }
         } else if (from != null) {
             if (from === username) return; // this makes no sense
             // take from another player
-            const fromPlayer = draft.players.find((p) => p.name === from);
-            if (fromPlayer && deepEqual(fromPlayer.token, token)) {
-                relinquish();
-                toPlayer.token = fromPlayer.token;
-                fromPlayer.token = null;
+            const fromPlayerIndex = draft.players.findIndex((p) => p.name === from);
+            if (fromPlayerIndex !== -1) {
+                const fromPlayer = draft.players[fromPlayerIndex];
+                if (deepEqual(fromPlayer.token, token)) {
+                    const put = relinquish();
+                    log.push({ player: toPlayerIndex, action: { from: fromPlayerIndex, put, take: token } });
+                    toPlayer.token = fromPlayer.token;
+                    fromPlayer.token = null;
+                }
             }
         } else {
             const ix = draft.tokens.findIndex((t) => deepEqual(t, token));
             if (ix !== -1) {
                 draft.tokens[ix] = null;
-                relinquish();
+                const put = relinquish();
+                log.push({ player: toPlayerIndex, action: { from: null, put, take: token } });
                 toPlayer.token = token;
             }
         }
@@ -132,8 +145,8 @@ function BiddingGame(props: BiddingGameProps) {
         </div>
         <div>
             <div className={styles.heading}>
-                Round {game.gameState.log.length}
-                {!inRoom && " (You are spectating.)"}
+                Round {game.gameState.log.length}{' '}
+                {!inRoom && "(You are spectating.)"}
                 {inRoom && <button onClick={() => {
                     if (reallyKillGame) {
                         setKillGame(true);
@@ -159,6 +172,7 @@ function BiddingGame(props: BiddingGameProps) {
             <button disabled={!inRoom || !game.gameState.tokens.every((t) => t == null)} onClick={() => setAdvanceRound(true)}>
                 {game.gameState.futureRounds.length === 0 ? "Finish" : "Next round"}
             </button>
+            <GameLog players={game.gameState.players} log={game.gameState.log} />
         </div>
     </div>;
 }
@@ -223,8 +237,31 @@ function ScoringGame(props: ScoringGameProps) {
                     Next game
                 </button>
             </>}
+            <GameLog players={game.gameState.players} log={game.gameState.log} />
         </div>
     </div>;
+}
+
+function GameLog({ players, log }: { players: Immutable<StartedPlayer[]>, log: Immutable<RoundLogEntry[][]> }) {
+    return <div className={styles.log}>
+        {log.map((roundLog, roundIndex) => <div className={styles.roundLog} key={roundIndex}>
+            <h2>Round {roundIndex + 1}</h2>
+            {roundLog.map((logEntry, i) => <div className={styles.roundLogEntry} key={i}>
+                <span className={styles.playerName}>{players[logEntry.player].name}</span>
+                {
+                    "take" in logEntry.action ?
+                        <> took the <SmallToken token={logEntry.action.take} /> from{' '}
+                            {
+                                logEntry.action.from == null ? <>the middle</> : <span className={styles.playerName}>{players[logEntry.action.from].name}</span>
+                            }
+                            {
+                                logEntry.action.put != null && <> and returned the <SmallToken token={logEntry.action.put} /></>
+                            }</>
+                        : <> returned the <SmallToken token={logEntry.action.put} /></>
+                }
+            </div>)}
+        </div>)}
+    </div>
 }
 
 const BREAK: Record<HandKind, number | null> = {
@@ -293,7 +330,11 @@ function NoCard() {
 // how 2 naming?
 function TokenV(props: { token: Token, disabled: boolean, onClick?: () => void }) {
     const { token, disabled, onClick } = props;
-    return <button className={styles.token} disabled={disabled} onClick={onClick}>{token.index}</button>
+    return <button className={styles.token} disabled={disabled} onClick={onClick}>{token.index}</button>;
+}
+
+function SmallToken({ token }: { token: Token }) {
+    return <span className={styles.smallToken}>{token.index}</span>;
 }
 
 function NoToken() {

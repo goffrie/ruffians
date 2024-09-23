@@ -35,7 +35,8 @@ export interface RoundLogEntry {
     action: {
         // Taking a token from another player or from the centre
         take: Token,
-        from: PlayerNumber | null,
+        from: PlayerNumber | null, // null if taking from the centre
+        put: Token | null, // What token the player previously had
     } | {
         // Putting a token back in the centre
         put: Token

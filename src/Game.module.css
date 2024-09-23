@@ -48,6 +48,10 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
+.playerName {
+    font-weight: bold;
+}
+
 .token, .noToken {
     margin: 4px;
     width: 48px;
@@ -75,6 +79,30 @@
     background: rgba(255, 255, 255, 0.2);
 }
 
+.smallToken {
+    display: inline-block;
+    vertical-align: middle;
+    width: 24px;
+    height: 24px;
+    border-radius: 12px;
+    border: 1px solid white;
+    text-align: center;
+}
+
 .noToken {
     border: 2px dashed white;
+}
+
+.log {
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+.log h2 {
+    order: 1;
+}
+
+.roundLog {
+    display: flex;
+    flex-direction: column-reverse;
 }
