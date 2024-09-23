@@ -65,7 +65,7 @@ function SetupGame(props: SetupGameProps) {
         </div>
         <div>
             <div className={styles.heading}>Creating game</div>
-            <input type="checkbox" checked={withJokersMutation ?? game.gameState.config.withJokers} onChange={(e) => setWithJokers(e.target.checked)} name="with_jokers" /> <label htmlFor="with_jokers">Include jokers in the deck</label><br />
+            <input type="checkbox" checked={withJokersMutation ?? game.gameState.config.withJokers} onChange={(e) => setWithJokers(e.target.checked)} id="with_jokers" /> <label htmlFor="with_jokers">Include jokers in the deck</label><br />
             <button className="startGame" disabled={!inRoom || game.gameState.players.length < 2 || (withJokersMutation != null)} onClick={startGame}>Start game</button>
         </div>
     </div>;
