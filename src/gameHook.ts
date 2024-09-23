@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { delay, deepEqual, Immutable } from './utils';
+import { delay, deepEqual } from './utils';
 import { callCommit, callList } from './gameAPI';
 import { TestRooms } from './testData';
 import { RoomState } from './gameState';
+import { Immutable } from 'mutative';
 
 export type GameRoom<State = RoomState> = {
     roomName: string,
@@ -13,7 +14,7 @@ export type GameRoom<State = RoomState> = {
 
 function useDevGame(roomName: string): Immutable<GameRoom> | null {
     // not really my favourite
-    const useFake = TestRooms.hasOwnProperty(roomName);
+    const useFake = Object.prototype.hasOwnProperty.call(TestRooms, roomName);
     const fake = useFakeGame(roomName);
     const real = useRealGame(useFake ? "" : roomName);
     return useFake ? fake : real;
@@ -81,8 +82,8 @@ function useRealGame(roomName: string): Immutable<GameRoom> | null {
 function useFakeGame(roomName: string): Immutable<GameRoom> | null {
     const [state, setState] = useState<Immutable<GameRoom> | null>(null);
     useEffect(() => {
-        if (!TestRooms.hasOwnProperty(roomName)) return;
-        const makeSetGameState = (version: number) => (newState: Immutable<RoomState>, _: object) => {
+        if (!Object.prototype.hasOwnProperty.call(TestRooms, roomName)) return;
+        const makeSetGameState = (version: number) => (newState: Immutable<RoomState>) => {
             setState({
                 roomName,
                 gameState: newState,

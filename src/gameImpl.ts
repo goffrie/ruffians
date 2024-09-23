@@ -1,7 +1,7 @@
-import { create } from "mutative";
+import { create, Immutable } from "mutative";
 import { BiddingState, Config, ResolveJokersState, RoomPhase, SetupPlayer, StartedPlayer, StartedState } from "./gameState";
 import { CARD_VALUES, DeckCard, PokerCard, Round, SUITS } from "./gameTypes";
-import { Immutable, shuffle } from "./utils";
+import { shuffle } from "./utils";
 
 export function makeDeck(withJokers: boolean): DeckCard[] {
     const baseDeck: DeckCard[] = SUITS.flatMap((suit) => CARD_VALUES.map((value) => ({ suit, value })));

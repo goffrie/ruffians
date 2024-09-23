@@ -1,5 +1,5 @@
+import { Immutable } from 'mutative';
 import { RoomState } from './gameState';
-import { Immutable } from './utils';
 
 // null means the room doesn't exist
 export type ListReply = {
