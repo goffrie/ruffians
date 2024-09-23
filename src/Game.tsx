@@ -217,13 +217,27 @@ const BREAK: Record<HandKind, number | null> = {
     [HandKind.ThreeOfAKind]: 1,
     [HandKind.FullHouse]: 2,
 }
+const HAND_KIND_NAME: Record<HandKind, string> = {
+    [HandKind.Flush]: "Flush",
+    [HandKind.HighCard]: "High card",
+    [HandKind.Straight]: "Straight",
+    [HandKind.StraightFlush]: "Straight flush",
+    [HandKind.FourOfAKind]: "Four of a kind",
+    [HandKind.Pair]: "Pair",
+    [HandKind.TwoPair]: "Two pair",
+    [HandKind.ThreeOfAKind]: "Three of a kind",
+    [HandKind.FullHouse]: "Full house",
+}
 function formatScore(score: Immutable<PokerHand>) {
     const brk = BREAK[score.kind];
     if (score.kind === HandKind.StraightFlush && score.order[0] === CardValue.Ace) {
         // wow you are so cool
         return <>Royal Flush!!!</>;
     }
-    return <>{HandKind[score.kind]} ({score.order.slice(0, brk != null ? brk : score.order.length).map(formatCardValue).join(",")}{brk != null ? "; " + score.order.slice(brk).map(formatCardValue).join(",") : ""})</>
+    return <>{HAND_KIND_NAME[score.kind]} (
+        {score.order.slice(0, brk != null ? brk : score.order.length).map(formatCardValue).join(",")}
+        {brk != null ? "; " + score.order.slice(brk).map(formatCardValue).join(",") : ""}
+        )</>
 }
 
 const STRING_VALUES: Record<number, string> = {
