@@ -45,14 +45,13 @@ function SetupGame(props: SetupGameProps) {
     const [, setJoinRoom] = useMutateGame(game, joinRoomMutator);
     const [, setLeaveRoom] = useMutateGame(game, leaveRoomMutator);
     const joinRoom = () => setJoinRoom(username);
-    const leaveRoom = () => setLeaveRoom(username);
 
     const [, setStartGame] = useMutateGame(game, startGameMutator);
     const startGame = () => setStartGame(true);
     return <div className={styles.container}>
         <div className={styles.players}>
             {
-                game.gameState.players.map((p) => <div className={styles.player}>{p.name}{p.name === username && <>{" "}<button onClick={leaveRoom}>Leave</button></>}</div>)
+                game.gameState.players.map((p) => <div className={styles.player}>{p.name}{inRoom && <>{" "}<button onClick={() => setLeaveRoom(p.name)}>{p.name === username ? "Leave" : "Kick"}</button></>}</div>)
             }
             {
                 !inRoom && <button onClick={joinRoom}>Join</button>
