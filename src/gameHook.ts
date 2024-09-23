@@ -81,6 +81,7 @@ function useRealGame(roomName: string): Immutable<GameRoom> | null {
 function useFakeGame(roomName: string): Immutable<GameRoom> | null {
     const [state, setState] = useState<Immutable<GameRoom> | null>(null);
     useEffect(() => {
+        if (!TestRooms.hasOwnProperty(roomName)) return;
         const makeSetGameState = (version: number) => (newState: Immutable<RoomState>, _: object) => {
             setState({
                 roomName,
