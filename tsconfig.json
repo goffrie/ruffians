@@ -22,7 +22,6 @@
     "plugins": [{ "name": "typescript-plugin-css-modules" }]
   },
   "include": [
-    "src",
-    "./node_modules/@types/webpack-env/index.d.ts"
+    "src"
   ]
 }
