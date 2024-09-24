@@ -386,14 +386,20 @@ function ScoringGame(props: ScoringGameProps) {
     const [, setStartNewGame] = useMutateGame(game, startNewGameMutator);
     const revealedPlayerIndex = players.findIndex((p) => p.token!.index === revealIndex);
     const revealedPlayerBestHand = new Set(handScores[revealedPlayerIndex][0]);
+    const playerScores = useMemo(
+        () =>
+            players
+                .map((p, i) => ({
+                    index: p.token!.index,
+                    score: handScores[i][1],
+                    playerIndex: i,
+                }))
+                .sort((p, q) => p.index - q.index),
+        [players, handScores]
+    );
     const gameWon = useMemo(() => {
-        const playerScores = players.map((p, i) => ({
-            index: p.token!.index,
-            score: handScores[i][1],
-        }));
-        playerScores.sort((p, q) => p.index - q.index);
         return playerScores.every((p, i) => i === 0 || !pokerHandLessThan(p.score, playerScores[i - 1].score));
-    }, [players, handScores]);
+    }, [playerScores]);
     return (
         <div className={styles.container}>
             <div className={styles.players}>
@@ -434,14 +440,17 @@ function ScoringGame(props: ScoringGameProps) {
                     ))}
                 </div>
                 <div className={styles.revealLog}>
-                    {players.slice(1, revealIndex).map((p, j) => {
+                    {playerScores.slice(1, revealIndex).map((p, j) => {
                         const i = j + 1;
-                        const beat = !pokerHandLessThan(handScores[i][1], handScores[i - 1][1]);
+                        const beat = !pokerHandLessThan(playerScores[i].score, playerScores[i - 1].score);
                         return (
                             <div>
-                                <span className={styles.playerName}>{players[i].name}</span>'s hand{" "}
-                                {beat ? "beat" : "didn't beat"}{" "}
-                                <span className={styles.playerName}>{players[i - 1].name}</span>.
+                                <span className={styles.playerName}>{players[playerScores[i].playerIndex].name}</span>'s
+                                hand {beat ? "beat" : "didn't beat"}{" "}
+                                <span className={styles.playerName}>
+                                    {players[playerScores[i - 1].playerIndex].name}
+                                </span>
+                                .
                             </div>
                         );
                     })}
