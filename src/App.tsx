@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
-import "./App.css";
+import * as styles from "./App.module.css";
 import { useEffect, useState } from "react";
 import { callMakeRoom } from "./gameAPI";
 import { NEW_ROOM } from "./gameState";
@@ -47,7 +47,7 @@ function App() {
             setInGame(true);
         };
         return (
-            <header className="App-header">
+            <header className={styles.header}>
                 <h1>the ruffians</h1>
                 <div>
                     What's your name?

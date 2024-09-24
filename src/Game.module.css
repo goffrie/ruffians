@@ -23,6 +23,8 @@
     margin: 4px 0;
 }
 
+.handScore {}
+
 .card,
 .noCard {
     display: inline-block;
@@ -44,6 +46,9 @@
 }
 .redSuit {
     color: #e00;
+}
+.blackSuit {
+    color: #000;
 }
 .cardHighlight {
     outline: 2px dashed white;
@@ -74,6 +79,7 @@
     font-weight: bold;
 }
 
+.tokenPool {}
 .token,
 .noToken {
     margin: 4px;
@@ -119,6 +125,8 @@
     border: 2px dashed white;
 }
 
+.gameResult {}
+
 .log {
     display: flex;
     flex-direction: column-reverse;
@@ -132,3 +140,5 @@
     display: flex;
     flex-direction: column-reverse;
 }
+
+.roundLogEntry {}

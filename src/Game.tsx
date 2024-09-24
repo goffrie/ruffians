@@ -14,7 +14,7 @@ import {
 } from "./gameState";
 import { CardValue, DeckCard, Suit, Token } from "./gameTypes";
 import { deepEqual } from "./utils";
-import styles from "./Game.module.css";
+import * as styles from "./Game.module.css";
 import { create, Immutable } from "mutative";
 import { bestHandAmong, HandKind, PokerHand, pokerHandLessThan } from "./pokerScoring";
 import { useMemo, useState } from "react";
