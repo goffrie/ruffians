@@ -1,8 +1,8 @@
 import { create, Immutable } from "mutative";
 import {
     BiddingState,
+    BiddingStateWithoutJokers,
     Config,
-    ResolveJokersState,
     RoomPhase,
     SetupPlayer,
     StartedPlayer,
@@ -21,8 +21,8 @@ export const DEFAULT_GAME: Immutable<Round[]> = [{ cards: 0 }, { cards: 3 }, { c
 
 export function makeInitialGame(players: Immutable<SetupPlayer[]>, config: Config): Immutable<StartedState> {
     const deck = makeDeck(config.withJokers);
-    const state: Immutable<ResolveJokersState> = {
-        phase: RoomPhase.RESOLVE_JOKERS,
+    const state: Immutable<BiddingState> = {
+        phase: RoomPhase.BIDDING,
         config,
         players: players.map((p) => ({
             name: p.name,
@@ -35,6 +35,8 @@ export function makeInitialGame(players: Immutable<SetupPlayer[]>, config: Confi
         deck,
         futureRounds: DEFAULT_GAME,
         jokerLog: [],
+        log: [],
+        tokens: [],
     };
     return maybeResolveJokers(state);
 }
@@ -45,9 +47,13 @@ function allHandsResolved(
     return players.every((p) => p.hand.every((c) => !(c instanceof Array) && !("joker" in c)));
 }
 
-export function maybeResolveJokers(game: Immutable<ResolveJokersState>): Immutable<StartedState> {
-    if (allHandsResolved(game.players)) {
-        return advanceRound({ ...game, players: game.players, phase: RoomPhase.BIDDING, tokens: [], log: [] });
+export function gameHandsAreResolved(game: Immutable<BiddingState>): game is Immutable<BiddingStateWithoutJokers> {
+    return allHandsResolved(game.players);
+}
+
+export function maybeResolveJokers(game: Immutable<BiddingState>): Immutable<StartedState> {
+    if (gameHandsAreResolved(game)) {
+        return advanceRound(game);
     }
     return create(game, (draft) => {
         draft.players.forEach((player, playerIx) => {
@@ -62,7 +68,7 @@ export function maybeResolveJokers(game: Immutable<ResolveJokersState>): Immutab
     });
 }
 
-export function advanceRound(game: Immutable<BiddingState>): Immutable<StartedState> {
+export function advanceRound(game: Immutable<BiddingStateWithoutJokers>): Immutable<StartedState> {
     const [draft, finalize] = create(game);
 
     const currentRound = draft.futureRounds.shift();

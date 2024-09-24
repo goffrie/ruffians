@@ -1,9 +1,8 @@
 import { GameRoom, useGame, useMutateGame } from "./gameHook";
-import { advanceRound, makeInitialGame, maybeResolveJokers } from "./gameImpl";
+import { advanceRound, gameHandsAreResolved, makeInitialGame, maybeResolveJokers } from "./gameImpl";
 import {
     BiddingState,
     JokerLogEntry,
-    ResolveJokersState,
     RoomPhase,
     RoomState,
     RoundLogEntry,
@@ -35,14 +34,6 @@ export function Game(props: Props) {
         case RoomPhase.SETUP:
             // https://github.com/microsoft/TypeScript/issues/18758
             return <SetupGame username={username} game={{ ...game, gameState: game.gameState }} />;
-        case RoomPhase.RESOLVE_JOKERS:
-            return (
-                <ResolveJokersGame
-                    username={username}
-                    setUsername={setUsername}
-                    game={{ ...game, gameState: game.gameState }}
-                />
-            );
         case RoomPhase.BIDDING:
             return (
                 <TokenAnimator>
@@ -187,38 +178,40 @@ function moveTokenMutator(
 }
 
 function advanceRoundMutator(game: Immutable<BiddingState>): Immutable<RoomState> {
+    if (!gameHandsAreResolved(game)) return game;
     if (!game.tokens.every((t) => t == null)) return game;
     return advanceRound(game);
 }
 
 function selectCardMutator(
-    game: Immutable<ResolveJokersState>,
+    game: Immutable<BiddingState>,
     [username, card, index]: [string, DeckCard, number]
 ): Immutable<StartedState> {
-    return maybeResolveJokers(
-        create(game, (draft) => {
-            const player = draft.players.find((p) => p.name === username);
-            if (!player) return;
-            const stackIndex = player.hand.findIndex((cards) => cards instanceof Array);
-            if (stackIndex === -1) return;
-            if (!deepEqual((player.hand[stackIndex] as Immutable<DeckCard[]>)[index], card)) return;
-            player.hand[stackIndex] = card;
-        })
-    );
+    const [draft, finalize] = create(game);
+    const player = draft.players.find((p) => p.name === username);
+    if (!player) return game;
+    const stackIndex = player.hand.findIndex((cards) => cards instanceof Array);
+    if (stackIndex === -1) return game;
+    if (!deepEqual((player.hand[stackIndex] as Immutable<DeckCard[]>)[index], card)) return game;
+    player.hand[stackIndex] = card;
+    return maybeResolveJokers(finalize());
 }
 
-type ResolveJokersGameProps = {
+type BiddingGameProps = {
     username: string;
     setUsername: (name: string) => void;
-    game: Immutable<GameRoom<ResolveJokersState>>;
+    game: Immutable<GameRoom<BiddingState>>;
 };
-function ResolveJokersGame(props: ResolveJokersGameProps) {
+function BiddingGame(props: BiddingGameProps) {
     const { username, setUsername, game } = props;
     const inRoom = game.gameState.players.some((p) => p.name === username);
     const [, setSelectCard] = useMutateGame(game, selectCardMutator);
     const selectCard = (card: DeckCard, index: number) => {
         setSelectCard([username, card, index]);
     };
+    const [, setMoveToken] = useMutateGame(game, moveTokenMutator);
+    const [, setAdvanceRound] = useMutateGame(game, advanceRoundMutator);
+    const waitingForJoker = !gameHandsAreResolved(game.gameState);
     return (
         <div className={styles.container}>
             <div className={styles.players}>
@@ -246,53 +239,18 @@ function ResolveJokersGame(props: ResolveJokersGameProps) {
                                     <NoCard key={i} />
                                 )
                             )}
-                        </div>
-                    </div>
-                ))}
-            </div>
-            <div>
-                <div className={styles.heading}>
-                    Waiting for players to choose their cards {inRoom && <KillGameButton game={game} />}
-                </div>
-                <GameLog players={game.gameState.players} jokerLog={game.gameState.jokerLog} log={[]} />
-            </div>
-        </div>
-    );
-}
-
-type BiddingGameProps = {
-    username: string;
-    setUsername: (name: string) => void;
-    game: Immutable<GameRoom<BiddingState>>;
-};
-function BiddingGame(props: BiddingGameProps) {
-    const { username, setUsername, game } = props;
-    const inRoom = game.gameState.players.some((p) => p.name === username);
-    const [, setMoveToken] = useMutateGame(game, moveTokenMutator);
-    const [, setAdvanceRound] = useMutateGame(game, advanceRoundMutator);
-    return (
-        <div className={styles.container}>
-            <div className={styles.players}>
-                {game.gameState.players.map((p) => (
-                    <div className={styles.player} key={p.name}>
-                        <span className={styles.playerName}>{p.name}</span>
-                        {process.env.NODE_ENV !== "production" && p.name !== username && (
-                            <button onClick={() => setUsername(p.name)}>Impersonate</button>
-                        )}
-                        {p.name === username && " (You)"}
-                        <br />
-                        <div className={styles.hand}>
-                            {p.hand.map((c, i) =>
-                                !inRoom || p.name === username ? <Card card={c} key={i} /> : <NoCard key={i} />
-                            )}
                             {p.pastTokens.map((t, i) => (
                                 <TokenV token={t} past={true} disabled={true} key={i} />
                             ))}
-                            <TokenV
-                                token={p.token}
-                                disabled={!inRoom}
-                                onClick={() => setMoveToken([username, username === p.name ? null : p.token, p.name])}
-                            />
+                            {!waitingForJoker && (
+                                <TokenV
+                                    token={p.token}
+                                    disabled={!inRoom}
+                                    onClick={() =>
+                                        setMoveToken([username, username === p.name ? null : p.token, p.name])
+                                    }
+                                />
+                            )}
                         </div>
                         <div className={styles.handScore}>&nbsp;</div>
                     </div>
@@ -300,7 +258,10 @@ function BiddingGame(props: BiddingGameProps) {
             </div>
             <div>
                 <div className={styles.heading}>
-                    Round {game.gameState.log.length} {!inRoom && "(You are spectating.)"}
+                    {waitingForJoker
+                        ? "Waiting for players to choose their cards"
+                        : `Round ${game.gameState.log.length}`}{" "}
+                    {!inRoom && "(You are spectating.)"}
                     {inRoom && <KillGameButton game={game} />}
                 </div>
                 <div className={styles.communityCards}>
@@ -324,7 +285,7 @@ function BiddingGame(props: BiddingGameProps) {
                     ))}
                 </div>
                 <button
-                    disabled={!inRoom || !game.gameState.tokens.every((t) => t == null)}
+                    disabled={!inRoom || waitingForJoker || !game.gameState.tokens.every((t) => t == null)}
                     onClick={() => setAdvanceRound(true)}
                 >
                     {game.gameState.futureRounds.length === 0 ? "Finish" : "Next round"}

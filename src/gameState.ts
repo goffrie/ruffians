@@ -2,7 +2,6 @@ import { Token, PokerCard, Round, DeckCard } from "./gameTypes";
 
 export enum RoomPhase {
     SETUP = "setup",
-    RESOLVE_JOKERS = "resolve_jokers",
     BIDDING = "bidding",
     SCORING = "scoring",
 }
@@ -64,17 +63,13 @@ export interface BaseStartedState<PlayerCard> {
     jokerLog: JokerLogEntry[];
 }
 
-export interface ResolveJokersState extends BaseStartedState<DeckCard | DeckCard[]> {
-    phase: RoomPhase.RESOLVE_JOKERS;
-    futureRounds: Round[];
-}
-
-export interface BiddingState extends BaseStartedState<PokerCard> {
+export interface BiddingState<PlayerCard = DeckCard | DeckCard[]> extends BaseStartedState<PlayerCard> {
     phase: RoomPhase.BIDDING;
     tokens: (Token | null)[];
     futureRounds: Round[];
     log: RoundLogEntry[][];
 }
+export type BiddingStateWithoutJokers = BiddingState<PokerCard>;
 
 export interface ScoringState extends BaseStartedState<PokerCard> {
     phase: RoomPhase.SCORING;
@@ -82,5 +77,5 @@ export interface ScoringState extends BaseStartedState<PokerCard> {
     revealIndex: number; // 1-indexed
 }
 
-export type StartedState = ResolveJokersState | BiddingState | ScoringState;
+export type StartedState = BiddingState | ScoringState;
 export type RoomState = SetupState | StartedState;

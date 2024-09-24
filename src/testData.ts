@@ -13,7 +13,7 @@ const starting: SetupState = {
 function makeResolveJokers(): Immutable<RoomState> {
     const deck = makeDeck(false) as PokerCard[];
     return maybeResolveJokers({
-        phase: RoomPhase.RESOLVE_JOKERS,
+        phase: RoomPhase.BIDDING,
         config: { withJokers: true },
         players: starting.players.map((p, i) => ({
             name: p.name,
@@ -25,6 +25,8 @@ function makeResolveJokers(): Immutable<RoomState> {
         deck: [{ joker: 1 }, ...deck],
         futureRounds: DEFAULT_GAME,
         jokerLog: [],
+        log: [],
+        tokens: [],
     });
 }
 function makeFinishing(): BiddingState {
