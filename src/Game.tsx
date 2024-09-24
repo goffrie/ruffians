@@ -443,10 +443,11 @@ function ScoringGame(props: ScoringGameProps) {
                     {playerScores.slice(1, revealIndex).map((p, j) => {
                         const i = j + 1;
                         const beat = !pokerHandLessThan(playerScores[i].score, playerScores[i - 1].score);
+                        const tied = beat && !pokerHandLessThan(playerScores[i - 1].score, playerScores[i].score);
                         return (
                             <div key={i}>
                                 <span className={styles.playerName}>{players[playerScores[i].playerIndex].name}</span>'s
-                                hand {beat ? "beat" : "didn't beat"}{" "}
+                                hand {tied ? "tied" : beat ? "beat" : "didn't beat"}{" "}
                                 <span className={styles.playerName}>
                                     {players[playerScores[i - 1].playerIndex].name}
                                 </span>
