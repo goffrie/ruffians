@@ -601,11 +601,11 @@ function Card(props: { card: Immutable<DeckCard>; onClick?: () => void; highligh
         <div
             className={`${styles.card} ${highlight ? styles.cardHighlight : ""} ${
                 onClick != null ? styles.cardClickable : ""
-            }`}
+            } ${"joker" in card ? styles.cardJoker : ""}`}
             onClick={onClick}
         >
             {"joker" in card ? (
-                <>!</>
+                <>&#x2728;</>
             ) : (
                 <>
                     {formatCardValue(card.value)}
