@@ -95,7 +95,7 @@ function SetupGame(props: SetupGameProps) {
             <div className={styles.players}>
                 {game.gameState.players.map((p) => (
                     <div className={styles.player} key={p.name}>
-                        {p.name}
+                        <span className={styles.playerName}>{p.name}</span>
                         {inRoom && (
                             <>
                                 {" "}
@@ -222,7 +222,7 @@ function ResolveJokersGame(props: ResolveJokersGameProps) {
             <div className={styles.players}>
                 {game.gameState.players.map((p) => (
                     <div className={styles.player} key={p.name}>
-                        {p.name}
+                        <span className={styles.playerName}>{p.name}</span>
                         {process.env.NODE_ENV !== "production" && p.name !== username && (
                             <button onClick={() => setUsername(p.name)}>Impersonate</button>
                         )}
@@ -274,7 +274,7 @@ function BiddingGame(props: BiddingGameProps) {
             <div className={styles.players}>
                 {game.gameState.players.map((p) => (
                     <div className={styles.player} key={p.name}>
-                        {p.name}
+                        <span className={styles.playerName}>{p.name}</span>
                         {process.env.NODE_ENV !== "production" && p.name !== username && (
                             <button onClick={() => setUsername(p.name)}>Impersonate</button>
                         )}
@@ -403,7 +403,7 @@ function ScoringGame(props: ScoringGameProps) {
                         className={`${styles.player} ${i === revealedPlayerIndex ? styles.highlightPlayer : ""}`}
                         key={p.name}
                     >
-                        {p.name}
+                        <span className={styles.playerName}>{p.name}</span>
                         {p.name === username && " (You)"}
                         <br />
                         <div className={styles.hand}>
