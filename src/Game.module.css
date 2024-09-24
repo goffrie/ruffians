@@ -80,9 +80,9 @@
 }
 
 .tokenPool {}
+
 .token,
 .noToken {
-    margin: 4px;
     width: 48px;
     height: 48px;
     border-radius: 24px;
@@ -94,18 +94,24 @@
     /* i do not understand css */
     vertical-align: top;
 }
+.noToken {
+    margin: 4px;
+    border: 2px dashed white;
+}
 .token {
+    margin: -2px;
     border: 2px solid white;
+    box-shadow: 0 0 1px white; /* this shadow obscures slight artifacts from the noToken underneath */
 
-    background: none;
+    background-color: #570773;
     color: inherit;
     padding: 0;
 }
 .token:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, #570773, white 10%);
 }
 .token:active:not(:disabled) {
-    background: rgba(255, 255, 255, 0.2);
+    background: color-mix(in srgb, #570773, white 20%);
 }
 .token.pastToken {
     border-style: dotted;
@@ -119,10 +125,6 @@
     border-radius: 12px;
     border: 1px solid white;
     text-align: center;
-}
-
-.noToken {
-    border: 2px dashed white;
 }
 
 .gameResult {}

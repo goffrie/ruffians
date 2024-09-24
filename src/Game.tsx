@@ -18,6 +18,7 @@ import * as styles from "./Game.module.css";
 import { create, Immutable } from "mutative";
 import { bestHandAmong, HandKind, PokerHand, pokerHandLessThan } from "./pokerScoring";
 import { useMemo, useState } from "react";
+import { TokenAnimator, TokenV } from "./TokenV";
 
 type Props = {
     username: string;
@@ -44,11 +45,13 @@ export function Game(props: Props) {
             );
         case RoomPhase.BIDDING:
             return (
-                <BiddingGame
-                    username={username}
-                    setUsername={setUsername}
-                    game={{ ...game, gameState: game.gameState }}
-                />
+                <TokenAnimator>
+                    <BiddingGame
+                        username={username}
+                        setUsername={setUsername}
+                        game={{ ...game, gameState: game.gameState }}
+                    />
+                </TokenAnimator>
             );
         case RoomPhase.SCORING:
             return <ScoringGame username={username} game={{ ...game, gameState: game.gameState }} />;
@@ -286,15 +289,11 @@ function BiddingGame(props: BiddingGameProps) {
                         {p.pastTokens.map((t, i) => (
                             <TokenV token={t} past={true} disabled={true} key={i} />
                         ))}
-                        {p.token ? (
-                            <TokenV
-                                token={p.token}
-                                disabled={false}
-                                onClick={() => setMoveToken([username, username === p.name ? null : p.token, p.name])}
-                            />
-                        ) : (
-                            <NoToken />
-                        )}
+                        <TokenV
+                            token={p.token}
+                            disabled={false}
+                            onClick={() => setMoveToken([username, username === p.name ? null : p.token, p.name])}
+                        />
                     </div>
                 ))}
             </div>
@@ -314,18 +313,14 @@ function BiddingGame(props: BiddingGameProps) {
                     ))}
                 </div>
                 <div className={styles.tokenPool}>
-                    {game.gameState.tokens.map((token, i) =>
-                        token ? (
-                            <TokenV
-                                token={token}
-                                disabled={false}
-                                onClick={() => setMoveToken([username, token, null])}
-                                key={i}
-                            />
-                        ) : (
-                            <NoToken key={i} />
-                        )
-                    )}
+                    {game.gameState.tokens.map((token, i) => (
+                        <TokenV
+                            token={token}
+                            disabled={false}
+                            onClick={() => setMoveToken([username, token, null])}
+                            key={i}
+                        />
+                    ))}
                 </div>
                 <button
                     disabled={!inRoom || !game.gameState.tokens.every((t) => t == null)}
@@ -629,20 +624,6 @@ function NoCard() {
     return <div className={styles.noCard}></div>;
 }
 
-// how 2 naming?
-function TokenV(props: { token: Token; disabled?: boolean; past?: boolean; onClick?: () => void }) {
-    const { token, disabled, past, onClick } = props;
-    return (
-        <button className={`${styles.token} ${past ? styles.pastToken : ""}`} disabled={disabled} onClick={onClick}>
-            {token.index}
-        </button>
-    );
-}
-
 function SmallToken({ token }: { token: Token }) {
     return <span className={styles.smallToken}>{token.index}</span>;
-}
-
-function NoToken() {
-    return <div className={styles.noToken} />;
 }
