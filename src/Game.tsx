@@ -288,7 +288,7 @@ function BiddingGame(props: BiddingGameProps) {
                             ))}
                             <TokenV
                                 token={p.token}
-                                disabled={false}
+                                disabled={!inRoom}
                                 onClick={() => setMoveToken([username, username === p.name ? null : p.token, p.name])}
                             />
                         </div>
@@ -315,7 +315,7 @@ function BiddingGame(props: BiddingGameProps) {
                     {game.gameState.tokens.map((token, i) => (
                         <TokenV
                             token={token}
-                            disabled={false}
+                            disabled={!inRoom}
                             onClick={() => setMoveToken([username, token, null])}
                             key={i}
                         />
