@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import './App.css';
 import { useEffect, useState } from 'react';
 import { callMakeRoom } from './gameAPI';
