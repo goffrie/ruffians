@@ -420,7 +420,7 @@ function ScoringGame(props: ScoringGameProps) {
                         )}
                         <br />
                         {p.pastTokens.map((t) => (
-                            <TokenV token={t} disabled={true} key={i} />
+                            <TokenV token={t} past={true} disabled={true} key={i} />
                         ))}
                         <TokenV token={p.token!} disabled={true} />
                     </div>
