@@ -17,7 +17,7 @@ export function makeDeck(withJokers: boolean): DeckCard[] {
     return shuffle(baseDeck);
 }
 
-const DEFAULT_GAME: Immutable<Round[]> = [{ cards: 0 }, { cards: 3 }, { cards: 1 }, { cards: 1 }];
+export const DEFAULT_GAME: Immutable<Round[]> = [{ cards: 0 }, { cards: 3 }, { cards: 1 }, { cards: 1 }];
 
 export function makeInitialGame(players: Immutable<SetupPlayer[]>, config: Config): Immutable<StartedState> {
     const deck = makeDeck(config.withJokers);
