@@ -1,6 +1,6 @@
 import { Token } from "./gameTypes";
 import * as styles from "./Game.module.css";
-import { createContext, ReactElement, ReactNode, useContext, useLayoutEffect, useRef } from "react";
+import { createContext, ReactNode, useContext, useLayoutEffect, useRef } from "react";
 import { Immutable } from "mutative";
 
 // const TokenAnimatorContext = createContext<((token: Token, target: HTMLElement, disabled: boolean, onClick?: () => void) => void) | null>(null);
@@ -44,7 +44,7 @@ export function TokenV(props: TokenProps) {
             ref.current.style.position = "relative";
             ref.current.style.left = `${dx}px`;
             ref.current.style.top = `${dy}px`;
-            ref.current.offsetLeft; // force a relayout
+            void ref.current.offsetLeft; // force a relayout
             const timingFunction = "cubic-bezier(0.285, 0.880, 0.790, 1)";
             ref.current.style.transition = `top ${time}s ${timingFunction}, left ${time}s ${timingFunction}`;
             ref.current.style.left = "0";
