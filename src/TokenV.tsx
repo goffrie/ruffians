@@ -3,7 +3,6 @@ import * as styles from "./Game.module.css";
 import { createContext, ReactNode, useContext, useLayoutEffect, useRef } from "react";
 import { Immutable } from "mutative";
 
-// const TokenAnimatorContext = createContext<((token: Token, target: HTMLElement, disabled: boolean, onClick?: () => void) => void) | null>(null);
 type TokenLocation = { x: number; y: number };
 const TokenAnimatorContext = createContext<Map<string, TokenLocation> | null>(null);
 export function TokenAnimator({ children }: { children: ReactNode }) {
