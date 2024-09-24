@@ -36,12 +36,17 @@ export function TokenV(props: TokenProps) {
         const y = containerRef.current.offsetTop;
         const existing = animatorContext.get(name);
         if (existing) {
+            const dx = existing.x - x;
+            const dy = existing.y - y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const time = distance / 1200 + 0.1;
             ref.current.style.transition = "";
             ref.current.style.position = "relative";
-            ref.current.style.left = `${existing.x - x}px`;
-            ref.current.style.top = `${existing.y - y}px`;
+            ref.current.style.left = `${dx}px`;
+            ref.current.style.top = `${dy}px`;
             ref.current.offsetLeft; // force a relayout
-            ref.current.style.transition = "top 0.5s, left 0.5s";
+            const timingFunction = "cubic-bezier(0.285, 0.880, 0.790, 1)";
+            ref.current.style.transition = `top ${time}s ${timingFunction}, left ${time}s ${timingFunction}`;
             ref.current.style.left = "0";
             ref.current.style.top = "0";
         }
