@@ -5,6 +5,7 @@
   "dependencies": {
     "@types/react": "^18.3.8",
     "@types/react-dom": "^18.3.0",
+    "@types/webpack-env": "^1.18.5",
     "mutative": "^1.0.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
@@ -52,6 +53,7 @@
     "tabWidth": 4,
     "semi": true,
     "singleQuote": false
-  },  
+  },
+  "source": "src/index.html",
   "proxy": "https://ruffians.goffrie.com/"
 }

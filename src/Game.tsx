@@ -17,7 +17,7 @@ import { deepEqual } from "./utils";
 import styles from "./Game.module.css";
 import { create, Immutable } from "mutative";
 import { bestHandAmong, HandKind, PokerHand, pokerHandLessThan } from "./pokerScoring";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type Props = {
     username: string;
@@ -264,9 +264,6 @@ type BiddingGameProps = {
 function BiddingGame(props: BiddingGameProps) {
     const { username, setUsername, game } = props;
     const inRoom = game.gameState.players.some((p) => p.name === username);
-    useEffect(() => {
-        console.log(game);
-    }, [username]);
     const [, setMoveToken] = useMutateGame(game, moveTokenMutator);
     const [, setAdvanceRound] = useMutateGame(game, advanceRoundMutator);
     return (
@@ -584,9 +581,9 @@ function Card(props: { card: Immutable<DeckCard>; onClick?: () => void; highligh
     const { card, onClick, highlight } = props;
     return (
         <div
-            className={`${styles.card} ${
-                highlight ? styles.cardHighlight : ""
-            } ${onClick != null ? styles.cardClickable : ""}`}
+            className={`${styles.card} ${highlight ? styles.cardHighlight : ""} ${
+                onClick != null ? styles.cardClickable : ""
+            }`}
             onClick={onClick}
         >
             {"joker" in card ? (

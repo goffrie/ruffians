@@ -1,6 +1,9 @@
+import { Immutable } from "mutative";
+import { GameRoom } from "./gameHook";
 import { makeDeck } from "./gameImpl";
 import { BiddingState, RoomPhase, RoomState, SetupState } from "./gameState";
 import { PokerCard } from "./gameTypes";
+import { useEffect, useState } from "react";
 
 const starting: SetupState = {
     phase: RoomPhase.SETUP,
@@ -30,3 +33,40 @@ export const TestRooms: Record<string, () => RoomState> = {
     starting: () => starting,
     finishing: makeFinishing,
 };
+
+let STATE: Record<string, Immutable<RoomState>> = {};
+
+if (module.hot) {
+    module.hot.dispose((data) => {
+        data.state = STATE;
+    });
+    module.hot.accept(() => {
+        STATE = module.hot?.data.state;
+    });
+}
+
+export function useFakeGame(roomName: string): Immutable<GameRoom> | null {
+    const [state, setState] = useState<Immutable<GameRoom> | null>(null);
+    useEffect(() => {
+        if (!Object.prototype.hasOwnProperty.call(TestRooms, roomName)) return;
+        const makeSetGameState = (version: number) => (newState: Immutable<RoomState>) => {
+            STATE[roomName] = newState;
+            setState({
+                roomName,
+                gameState: newState,
+                stateVersion: version + 1,
+                setGameState: makeSetGameState(version + 1),
+            });
+        };
+        if (!(roomName in STATE)) {
+            STATE[roomName] = TestRooms[roomName]();
+        };
+        setState({
+            roomName,
+            gameState: STATE[roomName],
+            stateVersion: 1,
+            setGameState: makeSetGameState(1),
+        });
+    }, [roomName]);
+    return state;
+}

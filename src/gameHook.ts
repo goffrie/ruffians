@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { delay, deepEqual } from "./utils";
 import { callCommit, callList } from "./gameAPI";
-import { TestRooms } from "./testData";
+import { TestRooms, useFakeGame } from "./testData";
 import { RoomState } from "./gameState";
 import { Immutable } from "mutative";
 
@@ -76,28 +76,6 @@ function useRealGame(roomName: string): Immutable<GameRoom> | null {
         }
         return () => abortController.abort();
     }, [roomName, version]);
-    return state;
-}
-
-function useFakeGame(roomName: string): Immutable<GameRoom> | null {
-    const [state, setState] = useState<Immutable<GameRoom> | null>(null);
-    useEffect(() => {
-        if (!Object.prototype.hasOwnProperty.call(TestRooms, roomName)) return;
-        const makeSetGameState = (version: number) => (newState: Immutable<RoomState>) => {
-            setState({
-                roomName,
-                gameState: newState,
-                stateVersion: version + 1,
-                setGameState: makeSetGameState(version + 1),
-            });
-        };
-        setState({
-            roomName,
-            gameState: TestRooms[roomName](),
-            stateVersion: 1,
-            setGameState: makeSetGameState(1),
-        });
-    }, [roomName]);
     return state;
 }
 
