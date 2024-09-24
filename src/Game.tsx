@@ -244,7 +244,6 @@ function ResolveJokersGame(props: ResolveJokersGameProps) {
                                     <NoCard key={i} />
                                 )
                             )}
-                            <br />
                         </div>
                     </div>
                 ))}
@@ -284,16 +283,16 @@ function BiddingGame(props: BiddingGameProps) {
                             {p.hand.map((c, i) =>
                                 !inRoom || p.name === username ? <Card card={c} key={i} /> : <NoCard key={i} />
                             )}
-                            <br />
+                            {p.pastTokens.map((t, i) => (
+                                <TokenV token={t} past={true} disabled={true} key={i} />
+                            ))}
+                            <TokenV
+                                token={p.token}
+                                disabled={false}
+                                onClick={() => setMoveToken([username, username === p.name ? null : p.token, p.name])}
+                            />
                         </div>
-                        {p.pastTokens.map((t, i) => (
-                            <TokenV token={t} past={true} disabled={true} key={i} />
-                        ))}
-                        <TokenV
-                            token={p.token}
-                            disabled={false}
-                            onClick={() => setMoveToken([username, username === p.name ? null : p.token, p.name])}
-                        />
+                        <div className={styles.handScore}>&nbsp;</div>
                     </div>
                 ))}
             </div>
@@ -414,15 +413,14 @@ function ScoringGame(props: ScoringGameProps) {
                                     <NoCard key={i} />
                                 )
                             )}
+                            {p.pastTokens.map((t) => (
+                                <TokenV token={t} past={true} disabled={true} key={i} />
+                            ))}
+                            <TokenV token={p.token!} disabled={true} />
                         </div>
-                        {p.token!.index <= revealIndex && (
-                            <div className={styles.handScore}>{formatScore(handScores[i][1])}</div>
-                        )}
-                        <br />
-                        {p.pastTokens.map((t) => (
-                            <TokenV token={t} past={true} disabled={true} key={i} />
-                        ))}
-                        <TokenV token={p.token!} disabled={true} />
+                        <div className={styles.handScore}>
+                            {p.token!.index <= revealIndex ? formatScore(handScores[i][1]) : <>&nbsp;</>}
+                        </div>
                     </div>
                 ))}
             </div>
@@ -434,6 +432,19 @@ function ScoringGame(props: ScoringGameProps) {
                     {game.gameState.communityCards.map((c, i) => (
                         <CardStack cards={c} highlight={revealedPlayerBestHand} key={i} />
                     ))}
+                </div>
+                <div className={styles.revealLog}>
+                    {players.slice(1, revealIndex).map((p, j) => {
+                        const i = j + 1;
+                        const beat = !pokerHandLessThan(handScores[i][1], handScores[i - 1][1]);
+                        return (
+                            <div>
+                                <span className={styles.playerName}>{players[i].name}</span>'s hand{" "}
+                                {beat ? "beat" : "didn't beat"}{" "}
+                                <span className={styles.playerName}>{players[i - 1].name}</span>.
+                            </div>
+                        );
+                    })}
                 </div>
                 {revealIndex < players.length && (
                     <button disabled={!inRoom} onClick={() => setRevealIndex(revealIndex + 1)}>

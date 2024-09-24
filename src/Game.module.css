@@ -1,12 +1,13 @@
 .container {
     display: flex;
     flex-direction: row;
+    gap: 16px;
 }
 .container > div {
     flex-grow: 1;
 }
 .players {
-    max-width: 300px;
+    max-width: 400px;
 }
 .heading {
     margin: 16px 0;
@@ -66,8 +67,8 @@
 }
 
 .player {
-    margin: 16px;
-    padding: 8px;
+    margin: 4px;
+    padding: 12px;
     border-radius: 8px;
 }
 
@@ -79,7 +80,13 @@
     font-weight: bold;
 }
 
-.tokenPool {}
+.tokenPool {
+    margin: 4px 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
 
 .token,
 .noToken {
@@ -95,7 +102,6 @@
     vertical-align: top;
 }
 .noToken {
-    margin: 4px;
     border: 2px dashed white;
 }
 .token {
@@ -127,6 +133,11 @@
     text-align: center;
 }
 
+.revealLog {
+    display: flex;
+    flex-direction: column;
+    margin: 4px 0;
+}
 .gameResult {}
 
 .log {
