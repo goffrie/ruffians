@@ -73,7 +73,9 @@ function leaveRoomMutator(game: Immutable<SetupState>, username: string): Immuta
     };
 }
 function withJokersMutator(game: Immutable<SetupState>, withJokers: boolean): Immutable<SetupState> {
-    return { ...game, config: { ...game.config, withJokers } };
+    return create(game, (draft) => {
+        draft.config.withJokers = withJokers;
+    });
 }
 function startGameMutator(game: Immutable<SetupState>): Immutable<StartedState> {
     return makeInitialGame(game.players, game.config);
