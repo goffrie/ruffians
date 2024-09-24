@@ -69,7 +69,7 @@ function App() {
             </header>
         );
     } else {
-        return <Game username={username} setUsername={saveUsername} roomName={roomName} />;
+        return <Game username={username} setUsername={saveUsername} roomName={roomName} key={roomName} />;
     }
 }
 
