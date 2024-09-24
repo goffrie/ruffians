@@ -444,7 +444,7 @@ function ScoringGame(props: ScoringGameProps) {
                         const i = j + 1;
                         const beat = !pokerHandLessThan(playerScores[i].score, playerScores[i - 1].score);
                         return (
-                            <div>
+                            <div key={i}>
                                 <span className={styles.playerName}>{players[playerScores[i].playerIndex].name}</span>'s
                                 hand {beat ? "beat" : "didn't beat"}{" "}
                                 <span className={styles.playerName}>
