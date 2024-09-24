@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react';
-import { delay, deepEqual } from './utils';
-import { callCommit, callList } from './gameAPI';
-import { TestRooms } from './testData';
-import { RoomState } from './gameState';
-import { Immutable } from 'mutative';
+import { useState, useEffect } from "react";
+import { delay, deepEqual } from "./utils";
+import { callCommit, callList } from "./gameAPI";
+import { TestRooms } from "./testData";
+import { RoomState } from "./gameState";
+import { Immutable } from "mutative";
 
 export type GameRoom<State = RoomState> = {
-    roomName: string,
-    gameState: State,
-    stateVersion: number,
-    setGameState: (newState: Immutable<RoomState>, abortSignal: AbortSignal) => void,
+    roomName: string;
+    gameState: State;
+    stateVersion: number;
+    setGameState: (newState: Immutable<RoomState>, abortSignal: AbortSignal) => void;
 };
 
 function useDevGame(roomName: string): Immutable<GameRoom> | null {
@@ -20,7 +20,7 @@ function useDevGame(roomName: string): Immutable<GameRoom> | null {
     return useFake ? fake : real;
 }
 
-export const useGame = process.env.NODE_ENV === 'development' ? useDevGame : useRealGame;
+export const useGame = process.env.NODE_ENV === "development" ? useDevGame : useRealGame;
 
 async function listLoop(roomName: string, version: number, signal: AbortSignal): Promise<GameRoom | null> {
     let backoff = 1000;
@@ -31,7 +31,7 @@ async function listLoop(roomName: string, version: number, signal: AbortSignal):
             if (result == null) {
                 // TODO: potentially add error state
                 return null;
-            } else if ('timeout' in result) {
+            } else if ("timeout" in result) {
                 continue;
             } else {
                 return {
@@ -59,7 +59,7 @@ async function listLoop(roomName: string, version: number, signal: AbortSignal):
             // back off and retry
             console.log(`Backing off for ${backoff} ms`);
             await delay(backoff);
-            backoff *= (Math.random() + 0.5);
+            backoff *= Math.random() + 0.5;
             backoff = Math.min(backoff, 30000);
             continue;
         }
@@ -89,7 +89,7 @@ function useFakeGame(roomName: string): Immutable<GameRoom> | null {
                 gameState: newState,
                 stateVersion: version + 1,
                 setGameState: makeSetGameState(version + 1),
-            })
+            });
         };
         setState({
             roomName,
@@ -105,7 +105,7 @@ function useFakeGame(roomName: string): Immutable<GameRoom> | null {
 export function useMutateGame<State, Mutation>(
     game: Immutable<GameRoom<State>>,
     mutator: (gameState: Immutable<State>, mutation: Mutation) => Immutable<RoomState>,
-    initial?: Mutation,
+    initial?: Mutation
 ): [Mutation | undefined, (arg: Mutation) => void] {
     const { gameState, setGameState } = game;
     const [mutation, setMutation] = useState<Mutation | undefined>(initial);
@@ -118,7 +118,7 @@ export function useMutateGame<State, Mutation>(
             return;
         }
         const abortController = new AbortController();
-        setGameState(newState, abortController.signal)
+        setGameState(newState, abortController.signal);
         return () => abortController.abort();
     }, [setGameState, gameState, mutator, mutation]);
     return [mutation, setMutation];

@@ -38,18 +38,18 @@ export const CARD_VALUES: readonly CardValue[] = [
 ];
 
 export type PokerCard = {
-    suit: Suit,
-    value: CardValue,
+    suit: Suit;
+    value: CardValue;
 };
 
 export type DeckCard = PokerCard | { joker: number };
 
 export type Token = {
-    index: number,
+    index: number;
     // 0-indexed
-    round: number,
+    round: number;
 };
 
 export type Round = {
-    cards: number,
+    cards: number;
 };

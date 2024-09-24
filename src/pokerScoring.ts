@@ -13,7 +13,7 @@ export enum HandKind {
     FourOfAKind,
     StraightFlush,
 }
-export type PokerHand = { kind: HandKind, order: CardValue[] };
+export type PokerHand = { kind: HandKind; order: CardValue[] };
 
 export function pokerHandLessThan(a: Immutable<PokerHand>, b: Immutable<PokerHand>): boolean {
     if (a.kind !== b.kind) return a.kind < b.kind;
@@ -32,10 +32,18 @@ export function scoreHand(inputHand: Cards): Immutable<PokerHand> {
         return a.value - b.value;
     });
     const isFlush = hand.every((c) => c.suit === hand[0].suit);
-    const isStraight = hand.every((c, i) => i === 0 || c.value === hand[i - 1].value + 1 || (/* Special case: ace counts as 1 for a straight */ c.value === CardValue.Ace && hand[i - 1].value === CardValue.Four));
-    const straightValue = isStraight ? (
-        hand[4].value === CardValue.Ace && hand[3].value === CardValue.Four ? CardValue.Four : hand[4].value
-    ) : null;
+    const isStraight = hand.every(
+        (c, i) =>
+            i === 0 ||
+            c.value === hand[i - 1].value + 1 ||
+            /* Special case: ace counts as 1 for a straight */ (c.value === CardValue.Ace &&
+                hand[i - 1].value === CardValue.Four)
+    );
+    const straightValue = isStraight
+        ? hand[4].value === CardValue.Ace && hand[3].value === CardValue.Four
+            ? CardValue.Four
+            : hand[4].value
+        : null;
     if (isFlush && straightValue != null) {
         // Straight flush and/or royal flush
         // i am obliged to consider a royal flush to be a special case of a straight flush that doesn't require extra handling
@@ -62,7 +70,7 @@ export function scoreHand(inputHand: Cards): Immutable<PokerHand> {
         return { kind: HandKind.FullHouse, order: [triple, pair] };
     }
     if (isFlush) {
-        return { kind: HandKind.Flush, order: hand.reverse().map((c) => c.value) }
+        return { kind: HandKind.Flush, order: hand.reverse().map((c) => c.value) };
     }
     if (straightValue != null) {
         return { kind: HandKind.Straight, order: [straightValue] };
@@ -74,7 +82,7 @@ export function scoreHand(inputHand: Cards): Immutable<PokerHand> {
     if (secondPair) {
         const kicker = hand.find((c) => c.value !== pair && c.value !== secondPair);
         // secondPair is always higher than pair
-        return { kind: HandKind.TwoPair, order: [secondPair, pair!, kicker!.value] }
+        return { kind: HandKind.TwoPair, order: [secondPair, pair!, kicker!.value] };
     }
     if (pair) {
         const kicker = hand.filter((c) => c.value !== pair);

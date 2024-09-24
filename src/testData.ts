@@ -4,11 +4,7 @@ import { PokerCard } from "./gameTypes";
 
 const starting: SetupState = {
     phase: RoomPhase.SETUP,
-    players: [
-        { name: "player1" },
-        { name: "player2" },
-        { name: "player3" },
-    ],
+    players: [{ name: "player1" }, { name: "player2" }, { name: "player3" }],
     config: { withJokers: true },
 };
 function makeFinishing(): BiddingState {
@@ -17,7 +13,10 @@ function makeFinishing(): BiddingState {
         phase: RoomPhase.BIDDING,
         config: { withJokers: true },
         players: starting.players.map((p, i) => ({
-            name: p.name, hand: deck.splice(0, 2), pastTokens: [], token: { index: i + 1, round: 0 },
+            name: p.name,
+            hand: deck.splice(0, 2),
+            pastTokens: [],
+            token: { index: i + 1, round: 0 },
         })),
         communityCards: [...deck.splice(0, 4).map((x) => [x]), deck.splice(0, 2)],
         deck,

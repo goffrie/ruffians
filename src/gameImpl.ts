@@ -1,5 +1,13 @@
 import { create, Immutable } from "mutative";
-import { BiddingState, Config, ResolveJokersState, RoomPhase, SetupPlayer, StartedPlayer, StartedState } from "./gameState";
+import {
+    BiddingState,
+    Config,
+    ResolveJokersState,
+    RoomPhase,
+    SetupPlayer,
+    StartedPlayer,
+    StartedState,
+} from "./gameState";
 import { CARD_VALUES, DeckCard, PokerCard, Round, SUITS } from "./gameTypes";
 import { shuffle } from "./utils";
 
@@ -9,12 +17,7 @@ export function makeDeck(withJokers: boolean): DeckCard[] {
     return shuffle(baseDeck);
 }
 
-const DEFAULT_GAME: Immutable<Round[]> = [
-    { cards: 0 },
-    { cards: 3 },
-    { cards: 1 },
-    { cards: 1 },
-]
+const DEFAULT_GAME: Immutable<Round[]> = [{ cards: 0 }, { cards: 3 }, { cards: 1 }, { cards: 1 }];
 
 export function makeInitialGame(players: Immutable<SetupPlayer[]>, config: Config): Immutable<StartedState> {
     const deck = makeDeck(config.withJokers);
@@ -36,7 +39,9 @@ export function makeInitialGame(players: Immutable<SetupPlayer[]>, config: Confi
     return maybeResolveJokers(state);
 }
 
-function allHandsResolved(players: Immutable<StartedPlayer<DeckCard | DeckCard[]>[]>): players is Immutable<StartedPlayer<PokerCard>[]> {
+function allHandsResolved(
+    players: Immutable<StartedPlayer<DeckCard | DeckCard[]>[]>
+): players is Immutable<StartedPlayer<PokerCard>[]> {
     return players.every((p) => p.hand.every((c) => !(c instanceof Array) && !("joker" in c)));
 }
 
@@ -103,5 +108,5 @@ export function advanceRound(game: Immutable<BiddingState>): Immutable<StartedSt
 
     // mint new tokens
     draft.tokens = draft.players.map((_, i) => ({ index: i + 1, round: roundIndex }));
-    return finalize()
+    return finalize();
 }

@@ -12,7 +12,8 @@
     margin: 16px 0;
 }
 
-.communityCards, .hand {
+.communityCards,
+.hand {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -22,7 +23,8 @@
     margin: 4px 0;
 }
 
-.card, .noCard {
+.card,
+.noCard {
     display: inline-block;
     width: 24px;
     height: 32px;
@@ -72,7 +74,8 @@
     font-weight: bold;
 }
 
-.token, .noToken {
+.token,
+.noToken {
     margin: 4px;
     width: 48px;
     height: 48px;

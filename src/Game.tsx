@@ -1,5 +1,5 @@
-import { GameRoom, useGame, useMutateGame } from './gameHook';
-import { advanceRound, makeInitialGame, maybeResolveJokers } from './gameImpl';
+import { GameRoom, useGame, useMutateGame } from "./gameHook";
+import { advanceRound, makeInitialGame, maybeResolveJokers } from "./gameImpl";
 import {
     BiddingState,
     JokerLogEntry,
@@ -11,18 +11,13 @@ import {
     SetupState,
     StartedPlayer,
     StartedState,
-} from './gameState';
-import { CardValue, DeckCard, Suit, Token } from './gameTypes';
-import { deepEqual } from './utils';
-import styles from './Game.module.css';
-import { create, Immutable } from 'mutative';
-import {
-    bestHandAmong,
-    HandKind,
-    PokerHand,
-    pokerHandLessThan,
-} from './pokerScoring';
-import { useEffect, useMemo, useState } from 'react';
+} from "./gameState";
+import { CardValue, DeckCard, Suit, Token } from "./gameTypes";
+import { deepEqual } from "./utils";
+import styles from "./Game.module.css";
+import { create, Immutable } from "mutative";
+import { bestHandAmong, HandKind, PokerHand, pokerHandLessThan } from "./pokerScoring";
+import { useEffect, useMemo, useState } from "react";
 
 type Props = {
     username: string;
@@ -38,12 +33,7 @@ export function Game(props: Props) {
     switch (game.gameState.phase) {
         case RoomPhase.SETUP:
             // https://github.com/microsoft/TypeScript/issues/18758
-            return (
-                <SetupGame
-                    username={username}
-                    game={{ ...game, gameState: game.gameState }}
-                />
-            );
+            return <SetupGame username={username} game={{ ...game, gameState: game.gameState }} />;
         case RoomPhase.RESOLVE_JOKERS:
             return (
                 <ResolveJokersGame
@@ -61,12 +51,7 @@ export function Game(props: Props) {
                 />
             );
         case RoomPhase.SCORING:
-            return (
-                <ScoringGame
-                    username={username}
-                    game={{ ...game, gameState: game.gameState }}
-                />
-            );
+            return <ScoringGame username={username} game={{ ...game, gameState: game.gameState }} />;
     }
 }
 
@@ -74,31 +59,20 @@ type SetupGameProps = {
     username: string;
     game: Immutable<GameRoom<SetupState>>;
 };
-function joinRoomMutator(
-    game: Immutable<SetupState>,
-    username: string
-): Immutable<SetupState> {
+function joinRoomMutator(game: Immutable<SetupState>, username: string): Immutable<SetupState> {
     if (game.players.some((p) => p.name === username)) return game;
     return { ...game, players: [...game.players, { name: username }] };
 }
-function leaveRoomMutator(
-    game: Immutable<SetupState>,
-    username: string
-): Immutable<SetupState> {
+function leaveRoomMutator(game: Immutable<SetupState>, username: string): Immutable<SetupState> {
     return {
         ...game,
         players: game.players.filter((p) => p.name !== username),
     };
 }
-function withJokersMutator(
-    game: Immutable<SetupState>,
-    withJokers: boolean
-): Immutable<SetupState> {
+function withJokersMutator(game: Immutable<SetupState>, withJokers: boolean): Immutable<SetupState> {
     return { ...game, config: { ...game.config, withJokers } };
 }
-function startGameMutator(
-    game: Immutable<SetupState>
-): Immutable<StartedState> {
+function startGameMutator(game: Immutable<SetupState>): Immutable<StartedState> {
     return makeInitialGame(game.players, game.config);
 }
 function SetupGame(props: SetupGameProps) {
@@ -109,10 +83,7 @@ function SetupGame(props: SetupGameProps) {
     const [, setLeaveRoom] = useMutateGame(game, leaveRoomMutator);
     const joinRoom = () => setJoinRoom(username);
 
-    const [withJokersMutation, setWithJokers] = useMutateGame(
-        game,
-        withJokersMutator
-    );
+    const [withJokersMutation, setWithJokers] = useMutateGame(game, withJokersMutator);
 
     const [, setStartGame] = useMutateGame(game, startGameMutator);
     const startGame = () => setStartGame(true);
@@ -120,13 +91,13 @@ function SetupGame(props: SetupGameProps) {
         <div className={styles.container}>
             <div className={styles.players}>
                 {game.gameState.players.map((p) => (
-                    <div className={styles.player}>
+                    <div className={styles.player} key={p.name}>
                         {p.name}
                         {inRoom && (
                             <>
-                                {' '}
+                                {" "}
                                 <button onClick={() => setLeaveRoom(p.name)}>
-                                    {p.name === username ? 'Leave' : 'Kick'}
+                                    {p.name === username ? "Leave" : "Kick"}
                                 </button>
                             </>
                         )}
@@ -138,21 +109,15 @@ function SetupGame(props: SetupGameProps) {
                 <div className={styles.heading}>Creating game</div>
                 <input
                     type="checkbox"
-                    checked={
-                        withJokersMutation ?? game.gameState.config.withJokers
-                    }
+                    checked={withJokersMutation ?? game.gameState.config.withJokers}
                     onChange={(e) => setWithJokers(e.target.checked)}
                     id="with_jokers"
-                />{' '}
+                />{" "}
                 <label htmlFor="with_jokers">Include jokers in the deck</label>
                 <br />
                 <button
                     className="startGame"
-                    disabled={
-                        !inRoom ||
-                        game.gameState.players.length < 2 ||
-                        withJokersMutation != null
-                    }
+                    disabled={!inRoom || game.gameState.players.length < 2 || withJokersMutation != null}
                     onClick={startGame}
                 >
                     Start game
@@ -167,9 +132,7 @@ function moveTokenMutator(
     [username, token, from]: [string, Token | null, string | null]
 ): Immutable<BiddingState> {
     return create(game, (draft) => {
-        const toPlayerIndex = draft.players.findIndex(
-            (p) => p.name === username
-        );
+        const toPlayerIndex = draft.players.findIndex((p) => p.name === username);
         if (toPlayerIndex === -1) return;
         const toPlayer = draft.players[toPlayerIndex];
         const log = draft.log[draft.log.length - 1];
@@ -190,9 +153,7 @@ function moveTokenMutator(
         } else if (from != null) {
             if (from === username) return; // this makes no sense
             // take from another player
-            const fromPlayerIndex = draft.players.findIndex(
-                (p) => p.name === from
-            );
+            const fromPlayerIndex = draft.players.findIndex((p) => p.name === from);
             if (fromPlayerIndex !== -1) {
                 const fromPlayer = draft.players[fromPlayerIndex];
                 if (deepEqual(fromPlayer.token, token)) {
@@ -220,9 +181,7 @@ function moveTokenMutator(
     });
 }
 
-function advanceRoundMutator(
-    game: Immutable<BiddingState>
-): Immutable<RoomState> {
+function advanceRoundMutator(game: Immutable<BiddingState>): Immutable<RoomState> {
     if (!game.tokens.every((t) => t == null)) return game;
     return advanceRound(game);
 }
@@ -235,17 +194,9 @@ function selectCardMutator(
         create(game, (draft) => {
             const player = draft.players.find((p) => p.name === username);
             if (!player) return;
-            const stackIndex = player.hand.findIndex(
-                (cards) => cards instanceof Array
-            );
+            const stackIndex = player.hand.findIndex((cards) => cards instanceof Array);
             if (stackIndex === -1) return;
-            if (
-                !deepEqual(
-                    (player.hand[stackIndex] as Immutable<DeckCard[]>)[index],
-                    card
-                )
-            )
-                return;
+            if (!deepEqual((player.hand[stackIndex] as Immutable<DeckCard[]>)[index], card)) return;
             player.hand[stackIndex] = card;
         })
     );
@@ -267,33 +218,27 @@ function ResolveJokersGame(props: ResolveJokersGameProps) {
         <div className={styles.container}>
             <div className={styles.players}>
                 {game.gameState.players.map((p) => (
-                    <div className={styles.player}>
+                    <div className={styles.player} key={p.name}>
                         {p.name}
-                        {process.env.NODE_ENV !== 'production' &&
-                            p.name !== username && (
-                                <button onClick={() => setUsername(p.name)}>
-                                    Impersonate
-                                </button>
-                            )}
-                        {p.name === username && ' (You)'}
+                        {process.env.NODE_ENV !== "production" && p.name !== username && (
+                            <button onClick={() => setUsername(p.name)}>Impersonate</button>
+                        )}
+                        {p.name === username && " (You)"}
                         <br />
                         <div className={styles.hand}>
-                            {p.hand.map((c) =>
+                            {p.hand.map((c, i) =>
                                 !inRoom || p.name === username ? (
                                     c instanceof Array ? (
                                         <CardStack
                                             cards={c}
-                                            onClick={
-                                                p.name === username
-                                                    ? selectCard
-                                                    : undefined
-                                            }
+                                            onClick={p.name === username ? selectCard : undefined}
+                                            key={i}
                                         />
                                     ) : (
-                                        <Card card={c} />
+                                        <Card card={c} key={i} />
                                     )
                                 ) : (
-                                    <NoCard />
+                                    <NoCard key={i} />
                                 )
                             )}
                             <br />
@@ -303,14 +248,9 @@ function ResolveJokersGame(props: ResolveJokersGameProps) {
             </div>
             <div>
                 <div className={styles.heading}>
-                    Waiting for players to choose their cards{' '}
-                    {inRoom && <KillGameButton game={game} />}
+                    Waiting for players to choose their cards {inRoom && <KillGameButton game={game} />}
                 </div>
-                <GameLog
-                    players={game.gameState.players}
-                    jokerLog={game.gameState.jokerLog}
-                    log={[]}
-                />
+                <GameLog players={game.gameState.players} jokerLog={game.gameState.jokerLog} log={[]} />
             </div>
         </div>
     );
@@ -333,40 +273,27 @@ function BiddingGame(props: BiddingGameProps) {
         <div className={styles.container}>
             <div className={styles.players}>
                 {game.gameState.players.map((p) => (
-                    <div className={styles.player}>
+                    <div className={styles.player} key={p.name}>
                         {p.name}
-                        {process.env.NODE_ENV !== 'production' &&
-                            p.name !== username && (
-                                <button onClick={() => setUsername(p.name)}>
-                                    Impersonate
-                                </button>
-                            )}
-                        {p.name === username && ' (You)'}
+                        {process.env.NODE_ENV !== "production" && p.name !== username && (
+                            <button onClick={() => setUsername(p.name)}>Impersonate</button>
+                        )}
+                        {p.name === username && " (You)"}
                         <br />
                         <div className={styles.hand}>
-                            {p.hand.map((c) =>
-                                !inRoom || p.name === username ? (
-                                    <Card card={c} />
-                                ) : (
-                                    <NoCard />
-                                )
+                            {p.hand.map((c, i) =>
+                                !inRoom || p.name === username ? <Card card={c} key={i} /> : <NoCard key={i} />
                             )}
                             <br />
                         </div>
-                        {p.pastTokens.map((t) => (
-                            <TokenV token={t} past={true} disabled={true} />
+                        {p.pastTokens.map((t, i) => (
+                            <TokenV token={t} past={true} disabled={true} key={i} />
                         ))}
                         {p.token ? (
                             <TokenV
                                 token={p.token}
                                 disabled={false}
-                                onClick={() =>
-                                    setMoveToken([
-                                        username,
-                                        username === p.name ? null : p.token,
-                                        p.name,
-                                    ])
-                                }
+                                onClick={() => setMoveToken([username, username === p.name ? null : p.token, p.name])}
                             />
                         ) : (
                             <NoToken />
@@ -376,58 +303,40 @@ function BiddingGame(props: BiddingGameProps) {
             </div>
             <div>
                 <div className={styles.heading}>
-                    Round {game.gameState.log.length}{' '}
-                    {!inRoom && '(You are spectating.)'}
+                    Round {game.gameState.log.length} {!inRoom && "(You are spectating.)"}
                     {inRoom && <KillGameButton game={game} />}
                 </div>
                 <div className={styles.communityCards}>
-                    {game.gameState.communityCards.map((c) =>
-                        c instanceof Array ? (
-                            <CardStack cards={c} />
-                        ) : (
-                            <Card card={c} />
-                        )
+                    {game.gameState.communityCards.map((c, i) =>
+                        c instanceof Array ? <CardStack cards={c} key={i} /> : <Card card={c} key={i} />
                     )}
                     {Array.from({
-                        length: game.gameState.futureRounds.reduce(
-                            (c, r) => r.cards + c,
-                            0
-                        ),
-                    }).map(() => (
-                        <NoCard />
+                        length: game.gameState.futureRounds.reduce((c, r) => r.cards + c, 0),
+                    }).map((_, i) => (
+                        <NoCard key={i} />
                     ))}
                 </div>
                 <div className={styles.tokenPool}>
-                    {game.gameState.tokens.map((token) =>
+                    {game.gameState.tokens.map((token, i) =>
                         token ? (
                             <TokenV
                                 token={token}
                                 disabled={false}
-                                onClick={() =>
-                                    setMoveToken([username, token, null])
-                                }
+                                onClick={() => setMoveToken([username, token, null])}
+                                key={i}
                             />
                         ) : (
-                            <NoToken />
+                            <NoToken key={i} />
                         )
                     )}
                 </div>
                 <button
-                    disabled={
-                        !inRoom ||
-                        !game.gameState.tokens.every((t) => t == null)
-                    }
+                    disabled={!inRoom || !game.gameState.tokens.every((t) => t == null)}
                     onClick={() => setAdvanceRound(true)}
                 >
-                    {game.gameState.futureRounds.length === 0
-                        ? 'Finish'
-                        : 'Next round'}
+                    {game.gameState.futureRounds.length === 0 ? "Finish" : "Next round"}
                 </button>
-                <GameLog
-                    players={game.gameState.players}
-                    jokerLog={game.gameState.jokerLog}
-                    log={game.gameState.log}
-                />
+                <GameLog players={game.gameState.players} jokerLog={game.gameState.jokerLog} log={game.gameState.log} />
             </div>
         </div>
     );
@@ -455,29 +364,18 @@ function KillGameButton({ game }: { game: Immutable<GameRoom<StartedState>> }) {
                     }
                 }}
             >
-                {reallyKillGame
-                    ? 'Really go back to game setup'
-                    : 'Go back to game setup'}
+                {reallyKillGame ? "Really go back to game setup" : "Go back to game setup"}
             </button>
-            {reallyKillGame && (
-                <button onClick={() => setReallyKillGame(false)}>
-                    Just kidding
-                </button>
-            )}
+            {reallyKillGame && <button onClick={() => setReallyKillGame(false)}>Just kidding</button>}
         </>
     );
 }
 
-function setRevealIndexMutator(
-    game: Immutable<ScoringState>,
-    newRevealIndex: number
-): Immutable<ScoringState> {
+function setRevealIndexMutator(game: Immutable<ScoringState>, newRevealIndex: number): Immutable<ScoringState> {
     return { ...game, revealIndex: Math.max(game.revealIndex, newRevealIndex) };
 }
 
-function startNewGameMutator(
-    game: Immutable<ScoringState>
-): Immutable<StartedState> {
+function startNewGameMutator(game: Immutable<ScoringState>): Immutable<StartedState> {
     return makeInitialGame(game.players, game.config);
 }
 
@@ -495,9 +393,7 @@ function ScoringGame(props: ScoringGameProps) {
     const inRoom = players.some((p) => p.name === username);
     const [, setRevealIndex] = useMutateGame(game, setRevealIndexMutator);
     const [, setStartNewGame] = useMutateGame(game, startNewGameMutator);
-    const revealedPlayerIndex = players.findIndex(
-        (p) => p.token!.index === revealIndex
-    );
+    const revealedPlayerIndex = players.findIndex((p) => p.token!.index === revealIndex);
     const revealedPlayerBestHand = new Set(handScores[revealedPlayerIndex][0]);
     const gameWon = useMemo(() => {
         const playerScores = players.map((p, i) => ({
@@ -505,50 +401,34 @@ function ScoringGame(props: ScoringGameProps) {
             score: handScores[i][1],
         }));
         playerScores.sort((p, q) => p.index - q.index);
-        return playerScores.every(
-            (p, i) =>
-                i === 0 ||
-                !pokerHandLessThan(p.score, playerScores[i - 1].score)
-        );
+        return playerScores.every((p, i) => i === 0 || !pokerHandLessThan(p.score, playerScores[i - 1].score));
     }, [players, handScores]);
     return (
         <div className={styles.container}>
             <div className={styles.players}>
                 {players.map((p, i) => (
                     <div
-                        className={`${styles.player} ${
-                            i === revealedPlayerIndex
-                                ? styles.highlightPlayer
-                                : ''
-                        }`}
+                        className={`${styles.player} ${i === revealedPlayerIndex ? styles.highlightPlayer : ""}`}
+                        key={p.name}
                     >
                         {p.name}
-                        {p.name === username && ' (You)'}
+                        {p.name === username && " (You)"}
                         <br />
                         <div className={styles.hand}>
-                            {p.hand.map((c) =>
-                                !inRoom ||
-                                p.name === username ||
-                                p.token!.index <= revealIndex ? (
-                                    <Card
-                                        card={c}
-                                        highlight={revealedPlayerBestHand.has(
-                                            c
-                                        )}
-                                    />
+                            {p.hand.map((c, i) =>
+                                !inRoom || p.name === username || p.token!.index <= revealIndex ? (
+                                    <Card card={c} highlight={revealedPlayerBestHand.has(c)} key={i} />
                                 ) : (
-                                    <NoCard />
+                                    <NoCard key={i} />
                                 )
                             )}
                         </div>
                         {p.token!.index <= revealIndex && (
-                            <div className={styles.handScore}>
-                                {formatScore(handScores[i][1])}
-                            </div>
+                            <div className={styles.handScore}>{formatScore(handScores[i][1])}</div>
                         )}
                         <br />
                         {p.pastTokens.map((t) => (
-                            <TokenV token={t} disabled={true} />
+                            <TokenV token={t} disabled={true} key={i} />
                         ))}
                         <TokenV token={p.token!} disabled={true} />
                     </div>
@@ -559,44 +439,24 @@ function ScoringGame(props: ScoringGameProps) {
                     Scoring: {revealIndex} ({players[revealedPlayerIndex].name})
                 </div>
                 <div className={styles.communityCards}>
-                    {game.gameState.communityCards.map((c) => (
-                        <CardStack
-                            cards={c}
-                            highlight={revealedPlayerBestHand}
-                        />
+                    {game.gameState.communityCards.map((c, i) => (
+                        <CardStack cards={c} highlight={revealedPlayerBestHand} key={i} />
                     ))}
                 </div>
                 {revealIndex < players.length && (
-                    <button
-                        disabled={!inRoom}
-                        onClick={() => setRevealIndex(revealIndex + 1)}
-                    >
-                        Reveal {revealIndex + 1} (
-                        {
-                            players.find(
-                                (p) => p.token!.index === revealIndex + 1
-                            )?.name
-                        }
-                        )
+                    <button disabled={!inRoom} onClick={() => setRevealIndex(revealIndex + 1)}>
+                        Reveal {revealIndex + 1} ({players.find((p) => p.token!.index === revealIndex + 1)?.name})
                     </button>
                 )}
                 {revealIndex === players.length && (
                     <>
                         <div className={styles.gameResult}>
-                            {gameWon
-                                ? 'You won this one!'
-                                : "You didn't wonnered."}
+                            {gameWon ? "You won this one!" : "You didn't wonnered."}
                         </div>
-                        <button onClick={() => setStartNewGame(true)}>
-                            Next game
-                        </button>
+                        <button onClick={() => setStartNewGame(true)}>Next game</button>
                     </>
                 )}
-                <GameLog
-                    players={game.gameState.players}
-                    jokerLog={game.gameState.jokerLog}
-                    log={game.gameState.log}
-                />
+                <GameLog players={game.gameState.players} jokerLog={game.gameState.jokerLog} log={game.gameState.log} />
             </div>
         </div>
     );
@@ -617,12 +477,10 @@ function GameLog({
                 {jokerLog.length > 0 && (
                     <div className={styles.roundLog}>
                         <h2>Setup</h2>
-                        {jokerLog.map((entry) => (
-                            <div className={styles.roundLogEntry}>
-                                <span className={styles.playerName}>
-                                    {players[entry.player].name}
-                                </span>{' '}
-                                discarded a joker
+                        {jokerLog.map((entry, i) => (
+                            <div className={styles.roundLogEntry} key={i}>
+                                <span className={styles.playerName}>{players[entry.player].name}</span> discarded a
+                                joker
                             </div>
                         ))}
                     </div>
@@ -632,45 +490,29 @@ function GameLog({
                         <h2>Round {roundIndex + 1}</h2>
                         {roundLog.map((logEntry, i) => (
                             <div className={styles.roundLogEntry} key={i}>
-                                <span className={styles.playerName}>
-                                    {players[logEntry.player].name}
-                                </span>
-                                {'take' in logEntry.action ? (
+                                <span className={styles.playerName}>{players[logEntry.player].name}</span>
+                                {"take" in logEntry.action ? (
                                     <>
-                                        {' '}
-                                        took the{' '}
-                                        <SmallToken
-                                            token={logEntry.action.take}
-                                        />{' '}
-                                        from{' '}
+                                        {" "}
+                                        took the <SmallToken token={logEntry.action.take} /> from{" "}
                                         {logEntry.action.from == null ? (
                                             <>the middle</>
                                         ) : (
                                             <span className={styles.playerName}>
-                                                {
-                                                    players[
-                                                        logEntry.action.from
-                                                    ].name
-                                                }
+                                                {players[logEntry.action.from].name}
                                             </span>
                                         )}
                                         {logEntry.action.put != null && (
                                             <>
-                                                {' '}
-                                                and returned the{' '}
-                                                <SmallToken
-                                                    token={logEntry.action.put}
-                                                />
+                                                {" "}
+                                                and returned the <SmallToken token={logEntry.action.put} />
                                             </>
                                         )}
                                     </>
                                 ) : (
                                     <>
-                                        {' '}
-                                        returned the{' '}
-                                        <SmallToken
-                                            token={logEntry.action.put}
-                                        />
+                                        {" "}
+                                        returned the <SmallToken token={logEntry.action.put} />
                                     </>
                                 )}
                             </div>
@@ -694,22 +536,19 @@ const BREAK: Record<HandKind, number | null> = {
     [HandKind.FullHouse]: null,
 };
 const HAND_KIND_NAME: Record<HandKind, string> = {
-    [HandKind.Flush]: 'Flush',
-    [HandKind.HighCard]: 'High card',
-    [HandKind.Straight]: 'Straight',
-    [HandKind.StraightFlush]: 'Straight flush',
-    [HandKind.FourOfAKind]: 'Four of a kind',
-    [HandKind.Pair]: 'Pair',
-    [HandKind.TwoPair]: 'Two pair',
-    [HandKind.ThreeOfAKind]: 'Three of a kind',
-    [HandKind.FullHouse]: 'Full house',
+    [HandKind.Flush]: "Flush",
+    [HandKind.HighCard]: "High card",
+    [HandKind.Straight]: "Straight",
+    [HandKind.StraightFlush]: "Straight flush",
+    [HandKind.FourOfAKind]: "Four of a kind",
+    [HandKind.Pair]: "Pair",
+    [HandKind.TwoPair]: "Two pair",
+    [HandKind.ThreeOfAKind]: "Three of a kind",
+    [HandKind.FullHouse]: "Full house",
 };
 function formatScore(score: Immutable<PokerHand>) {
     const brk = BREAK[score.kind];
-    if (
-        score.kind === HandKind.StraightFlush &&
-        score.order[0] === CardValue.Ace
-    ) {
+    if (score.kind === HandKind.StraightFlush && score.order[0] === CardValue.Ace) {
         // wow you are so cool
         return <>Royal Flush!!!</>;
     }
@@ -719,45 +558,38 @@ function formatScore(score: Immutable<PokerHand>) {
             {score.order
                 .slice(0, brk != null ? brk : score.order.length)
                 .map(formatCardValue)
-                .join(',')}
-            {brk != null
-                ? '; ' + score.order.slice(brk).map(formatCardValue).join(',')
-                : ''}
-            )
+                .join(",")}
+            {brk != null ? "; " + score.order.slice(brk).map(formatCardValue).join(",") : ""})
         </>
     );
 }
 
 const STRING_VALUES: Record<number, string> = {
-    [CardValue.Ace]: 'A',
-    [CardValue.Jack]: 'J',
-    [CardValue.Queen]: 'Q',
-    [CardValue.King]: 'K',
+    [CardValue.Ace]: "A",
+    [CardValue.Jack]: "J",
+    [CardValue.Queen]: "Q",
+    [CardValue.King]: "K",
 };
 function formatCardValue(value: CardValue): string {
     return STRING_VALUES[value] ?? value.toString();
 }
 const UNICODE_SUITS = {
-    [Suit.Diamonds]: '♦',
-    [Suit.Hearts]: '♥',
-    [Suit.Clubs]: '♣',
-    [Suit.Spades]: '♠',
+    [Suit.Diamonds]: "♦",
+    [Suit.Hearts]: "♥",
+    [Suit.Clubs]: "♣",
+    [Suit.Spades]: "♠",
 };
 
-function Card(props: {
-    card: Immutable<DeckCard>;
-    onClick?: () => void;
-    highlight?: boolean;
-}) {
+function Card(props: { card: Immutable<DeckCard>; onClick?: () => void; highlight?: boolean }) {
     const { card, onClick, highlight } = props;
     return (
         <div
             className={`${styles.card} ${
-                highlight ? styles.cardHighlight : ''
-            } ${onClick != null ? styles.cardClickable : ''}`}
+                highlight ? styles.cardHighlight : ""
+            } ${onClick != null ? styles.cardClickable : ""}`}
             onClick={onClick}
         >
-            {'joker' in card ? (
+            {"joker" in card ? (
                 <>!</>
             ) : (
                 <>
@@ -765,10 +597,7 @@ function Card(props: {
                     <br />
                     <span
                         className={
-                            card.suit === Suit.Diamonds ||
-                            card.suit === Suit.Hearts
-                                ? styles.redSuit
-                                : styles.blackSuit
+                            card.suit === Suit.Diamonds || card.suit === Suit.Hearts ? styles.redSuit : styles.blackSuit
                         }
                     >
                         {UNICODE_SUITS[card.suit]}
@@ -790,10 +619,9 @@ function CardStack(props: {
             {cards.map((card, i) => (
                 <Card
                     card={card}
-                    onClick={
-                        onClick != null ? () => onClick(card, i) : undefined
-                    }
+                    onClick={onClick != null ? () => onClick(card, i) : undefined}
                     highlight={highlight?.has(card)}
+                    key={i}
                 />
             ))}
         </div>
@@ -805,19 +633,10 @@ function NoCard() {
 }
 
 // how 2 naming?
-function TokenV(props: {
-    token: Token;
-    disabled?: boolean;
-    past?: boolean;
-    onClick?: () => void;
-}) {
+function TokenV(props: { token: Token; disabled?: boolean; past?: boolean; onClick?: () => void }) {
     const { token, disabled, past, onClick } = props;
     return (
-        <button
-            className={`${styles.token} ${past ? styles.pastToken : ''}`}
-            disabled={disabled}
-            onClick={onClick}
-        >
+        <button className={`${styles.token} ${past ? styles.pastToken : ""}`} disabled={disabled} onClick={onClick}>
             {token.index}
         </button>
     );

@@ -1,5 +1,5 @@
 export function delay(duration: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, duration));
+    return new Promise((resolve) => setTimeout(resolve, duration));
 }
 
 export function flatten<T>(list: Readonly<T[]>[]): T[] {
@@ -45,5 +45,5 @@ export function deepEqual(x: unknown, y: unknown): boolean {
 }
 
 export function mapNth<T>(xs: readonly T[], index: number, f: (arg: T) => T): T[] {
-    return xs.map((item, i) => i === index ? f(item) : item);
+    return xs.map((item, i) => (i === index ? f(item) : item));
 }
