@@ -37,13 +37,13 @@ export function Game(props: Props) {
             return <SetupGame username={username} game={{ ...game, gameState: game.gameState }} />;
         case RoomPhase.BIDDING:
             return (
-                    <TokenAnimator>
-                        <BiddingGame
-                            username={username}
-                            setUsername={setUsername}
-                            game={{ ...game, gameState: game.gameState }}
-                        />
-                    </TokenAnimator>
+                <TokenAnimator>
+                    <BiddingGame
+                        username={username}
+                        setUsername={setUsername}
+                        game={{ ...game, gameState: game.gameState }}
+                    />
+                </TokenAnimator>
             );
         case RoomPhase.SCORING:
             return (
