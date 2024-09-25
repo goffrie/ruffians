@@ -26,7 +26,7 @@ function makeResolveJokers(): Immutable<RoomState> {
         futureRounds: DEFAULT_GAME,
         jokerLog: [],
         log: [],
-        tokens: [],
+        tokens: [null, null, null],
     });
 }
 function makeFinishing(): BiddingState {

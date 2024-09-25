@@ -36,7 +36,8 @@ export function makeInitialGame(players: Immutable<SetupPlayer[]>, config: Confi
         futureRounds: DEFAULT_GAME,
         jokerLog: [],
         log: [],
-        tokens: [],
+        // start out with null tokens in case we need to resolve jokers
+        tokens: players.map(() => null),
     };
     return maybeResolveJokers(state);
 }
