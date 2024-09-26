@@ -16,8 +16,9 @@ import { deepEqual } from "./utils";
 import * as styles from "./Game.module.css";
 import { create, Immutable } from "mutative";
 import { bestHandAmong, HandKind, PokerHand, pokerHandLessThan } from "./pokerScoring";
-import { useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { TokenAnimator, TokenV } from "./TokenV";
+import { FxProvider, FxContext } from "./Fx";
 
 type Props = {
     username: string;
@@ -45,7 +46,11 @@ export function Game(props: Props) {
                 </TokenAnimator>
             );
         case RoomPhase.SCORING:
-            return <ScoringGame username={username} game={{ ...game, gameState: game.gameState }} />;
+            return (
+                <FxProvider>
+                    <ScoringGame username={username} game={{ ...game, gameState: game.gameState }} />
+                </FxProvider>
+            );
     }
 }
 
@@ -363,6 +368,16 @@ function ScoringGame(props: ScoringGameProps) {
     const gameWon = useMemo(() => {
         return playerScores.every((p, i) => i === 0 || !pokerHandLessThan(p.score, playerScores[i - 1].score));
     }, [playerScores]);
+    const { shootConfetti } = useContext(FxContext);
+    const doneRevealing = revealIndex === players.length;
+    useEffect(() => {
+        if (doneRevealing && gameWon) {
+            shootConfetti(0, window.innerHeight, -Math.PI / 2 + 0.3);
+            setTimeout(() => {
+                shootConfetti(window.innerWidth, window.innerHeight, -Math.PI / 2 - 0.3);
+            }, 400);
+        }
+    }, [doneRevealing, gameWon, shootConfetti]);
     return (
         <div className={styles.container}>
             <div className={styles.players}>
