@@ -370,11 +370,9 @@ function ScoringGame(props: ScoringGameProps) {
     }, [playerScores]);
     const { shootConfetti } = useContext(FxContext);
     useEffect(() => {
-        // Intentionally do this when the game is unwonnered.
-        // That way, no one will find out about this, since we always win.
-        if (true || revealIndex === players.length && !gameWon) {
+        if (true || revealIndex === players.length && gameWon) {
             shootConfetti(0, window.innerHeight, -Math.PI / 2 + 0.3);
-            const timeoutHandle = setTimeout(() => {
+            setTimeout(() => {
                 shootConfetti(window.innerWidth, window.innerHeight, -Math.PI / 2 - 0.3);
             }, 400);
         }

@@ -172,7 +172,7 @@ type FxContext = {
 
 export const FxContext = React.createContext<FxContext>({shootConfetti: () => {}});
 
-export const FxProvider: React.FC<React.PropsWithChildren> = ({children}) => {
+export const FxProvider: React.FC<PropsWithChildren> = ({children}) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const confettiRef = useRef<(x: number, y: number, angle: number) => void>();
     useEffect(() => {
