@@ -1,6 +1,6 @@
 import React, {useRef, useEffect, PropsWithChildren, useCallback} from 'react';
 
-const FX_FPS = 60;
+const FX_FPS = 90;
 
 enum ParticleBufferOffset {
     TTL = 0,
@@ -214,9 +214,12 @@ function startFxLoop(fx: FxState) {
         }
         const nowMs = Date.now();
         const timeDeltaMs = nowMs - lastRenderMs;
-        lastRenderMs = nowMs;
-        renderFxFrame(fx, timeDeltaMs / 1_000);
-        setTimeout(loopImpl, 1_000 / FX_FPS)
+        if (timeDeltaMs > 1_000 / FX_FPS) {
+            // Throttle animation, since this is just silly effect
+            renderFxFrame(fx, timeDeltaMs / 1_000);
+            lastRenderMs = nowMs;
+        }
+        requestAnimationFrame(loopImpl);
     };
     loopImpl();
 }
