@@ -369,14 +369,15 @@ function ScoringGame(props: ScoringGameProps) {
         return playerScores.every((p, i) => i === 0 || !pokerHandLessThan(p.score, playerScores[i - 1].score));
     }, [playerScores]);
     const { shootConfetti } = useContext(FxContext);
+    const doneRevealing = revealIndex === players.length;
     useEffect(() => {
-        if (revealIndex === players.length && gameWon) {
+        if (doneRevealing && gameWon) {
             shootConfetti(0, window.innerHeight, -Math.PI / 2 + 0.3);
             setTimeout(() => {
                 shootConfetti(window.innerWidth, window.innerHeight, -Math.PI / 2 - 0.3);
             }, 400);
         }
-    }, [revealIndex, gameWon, shootConfetti]);
+    }, [doneRevealing, gameWon, shootConfetti]);
     return (
         <div className={styles.container}>
             <div className={styles.players}>
