@@ -1,4 +1,4 @@
-import React, {useRef, useEffect, PropsWithChildren, useCallback} from 'react';
+import React, { useRef, useEffect, PropsWithChildren, useCallback } from "react";
 
 const FX_FPS = 90;
 
@@ -10,22 +10,23 @@ enum ParticleBufferOffset {
     DX = 4,
     DY = 5,
     DANGLE = 6,
-    LENGTH = 7
+    T0 = 7,
+    LENGTH = 8,
 }
 
 type ParticleSystemConfig = {
-    maxParticles: number,
-    particleLifespanS:number,
-    gravity?: number,
-    drag?: number
+    maxParticles: number;
+    particleLifespanS: number;
+    gravity?: number; // pixels/s^2
+    drag: number; // s^-1
 };
 
 type ParticleInfo = {
-    idx: number,
-    ttl: number,
-    x: number,
-    y: number,
-    angle: number,
+    idx: number;
+    ttl: number;
+    x: number;
+    y: number;
+    angle: number;
 };
 
 class ParticleSystem {
@@ -41,48 +42,15 @@ class ParticleSystem {
         this.maxParticles = maxParticles;
         this.particleLifespan = particleLifespanS;
         this.gravity = gravity ?? 0;
-        this.drag = drag ?? 0;
+        this.drag = drag;
         this.numParticles = 0;
         this.startOffset = 0;
         this.particleBuffer = new Float32Array(maxParticles * ParticleBufferOffset.LENGTH);
     }
 
-    public update(deltaS: number) {
-        // Count and skip dead particles
-        let i = 0;
-        while (i < this.numParticles) {
-            const particleOffset = ((this.startOffset + i) % this.maxParticles) * ParticleBufferOffset.LENGTH;
-            if (this.particleBuffer[particleOffset + ParticleBufferOffset.TTL] > deltaS) {
-                break;
-            }
-            i++;
-        }
-        const numDeadParticles = i;
-
-        // Update physics for remaining particles
-        while (i < this.numParticles) {
-            const decay = 1 - this.drag;
-            const particleOffset = ((this.startOffset + i) % this.maxParticles) * ParticleBufferOffset.LENGTH;
-            const dangle = this.particleBuffer[particleOffset + ParticleBufferOffset.DANGLE];
-            this.particleBuffer[particleOffset + ParticleBufferOffset.ANGLE] += dangle * deltaS;
-            this.particleBuffer[particleOffset + ParticleBufferOffset.DY] += this.gravity * deltaS;
-            this.particleBuffer[particleOffset + ParticleBufferOffset.DX] *= 1.0 - this.drag;
-            this.particleBuffer[particleOffset + ParticleBufferOffset.DY] *= 1.0 - this.drag;
-            const dx = this.particleBuffer[particleOffset + ParticleBufferOffset.DX];
-            const dy = this.particleBuffer[particleOffset + ParticleBufferOffset.DY];
-            this.particleBuffer[particleOffset + ParticleBufferOffset.X] += dx * deltaS;
-            this.particleBuffer[particleOffset + ParticleBufferOffset.Y] += dy * deltaS;
-            this.particleBuffer[particleOffset + ParticleBufferOffset.TTL] -= deltaS;
-            i++;
-        }
-
-        // Prune dead particles
-        this.startOffset = (this.startOffset + numDeadParticles) % this.maxParticles;
-        this.numParticles -= numDeadParticles;
-    }
-
-    public addParticle(x: number, y: number, angle: number, dx: number, dy: number, dangle: number) {
-        const particleOffset = ((this.startOffset + this.numParticles) % this.maxParticles) * ParticleBufferOffset.LENGTH;
+    public addParticle(x: number, y: number, angle: number, dx: number, dy: number, dangle: number, time: number) {
+        const particleOffset =
+            ((this.startOffset + this.numParticles) % this.maxParticles) * ParticleBufferOffset.LENGTH;
         this.particleBuffer[particleOffset + ParticleBufferOffset.TTL] = this.particleLifespan;
         this.particleBuffer[particleOffset + ParticleBufferOffset.X] = x;
         this.particleBuffer[particleOffset + ParticleBufferOffset.Y] = y;
@@ -90,6 +58,7 @@ class ParticleSystem {
         this.particleBuffer[particleOffset + ParticleBufferOffset.DX] = dx;
         this.particleBuffer[particleOffset + ParticleBufferOffset.DY] = dy;
         this.particleBuffer[particleOffset + ParticleBufferOffset.DANGLE] = dangle;
+        this.particleBuffer[particleOffset + ParticleBufferOffset.T0] = time;
         if (this.numParticles + 1 > this.maxParticles) {
             this.startOffset += 1;
             this.numParticles = this.maxParticles;
@@ -98,22 +67,30 @@ class ParticleSystem {
         }
     }
 
-    public* listParticles(): Generator<ParticleInfo> {
+    public forEachParticle(time: number, cb: (particle: ParticleInfo) => void) {
+        const { drag, gravity } = this;
         for (let i = 0; i < this.numParticles; i++) {
             const idx = (this.startOffset + i) % this.maxParticles;
             const particleOffset = idx * ParticleBufferOffset.LENGTH;
-            const ttl = this.particleBuffer[particleOffset + ParticleBufferOffset.TTL];
-            const x = this.particleBuffer[particleOffset + ParticleBufferOffset.X];
-            const y = this.particleBuffer[particleOffset + ParticleBufferOffset.Y];
-            const angle = this.particleBuffer[particleOffset + ParticleBufferOffset.ANGLE];
-            yield { idx, ttl, x, y, angle };
+            const t0 = this.particleBuffer[particleOffset + ParticleBufferOffset.T0];
+            const t = time - t0;
+            const ttl = this.particleBuffer[particleOffset + ParticleBufferOffset.TTL] - t;
+            if (ttl < 0) continue;
+            const expt = Math.expm1(drag * t);
+            const x0 = this.particleBuffer[particleOffset + ParticleBufferOffset.X];
+            const dx0 = this.particleBuffer[particleOffset + ParticleBufferOffset.DX];
+            const x = dx0 * expt / drag + x0;
+            const y0 = this.particleBuffer[particleOffset + ParticleBufferOffset.Y];
+            const dy0 = this.particleBuffer[particleOffset + ParticleBufferOffset.DY];
+            const y = ((dy0 + gravity / drag) * expt - gravity * t) / drag + y0;
+            const angle = this.particleBuffer[particleOffset + ParticleBufferOffset.ANGLE] + time * this.particleBuffer[particleOffset + ParticleBufferOffset.DANGLE];
+            cb({ idx, ttl, x, y, angle });
         }
     }
 }
 
 interface Emitter {
-    update: (deltaS: number) => void;
-    render: (gfx: CanvasRenderingContext2D) => void;
+    render: (gfx: CanvasRenderingContext2D, time: number) => number;
 }
 
 class ConfettiEmitter {
@@ -124,55 +101,60 @@ class ConfettiEmitter {
             maxParticles: 10_000,
             particleLifespanS: 8,
             gravity: 1_000,
-            drag: 0.2
+            drag: -3,
         });
     }
 
-    public update(deltaS: number) {
-        this.particleSystem.update(deltaS);
-    }
-
-    public shootConfetti(x: number, y: number, angle: number, power: number) {
+    public shootConfetti(x: number, y: number, angle: number, power: number, time: number) {
         for (let i = 0; i < 600; i++) {
-            const angleDeviation = Math.PI * 0.8  * (Math.random() - 0.5);
+            const angleDeviation = Math.PI * 0.8 * (Math.random() - 0.5);
             const powerDeviation = -0.95 * Math.random() * power;
-            this.particleSystem.addParticle(x, y, Math.random() * Math.PI * 2, Math.cos(angle + angleDeviation) * (power + powerDeviation), Math.sin(angle + angleDeviation) * (power + powerDeviation), (Math.random() - 0.5) * 4);
+            this.particleSystem.addParticle(
+                x,
+                y,
+                Math.random() * Math.PI * 2,
+                Math.cos(angle + angleDeviation) * (power + powerDeviation),
+                Math.sin(angle + angleDeviation) * (power + powerDeviation),
+                (Math.random() - 0.5) * 4,
+                time
+            );
         }
     }
 
-    public render(gfx: CanvasRenderingContext2D) {
-        for (const { idx, ttl, x, y, angle } of this.particleSystem.listParticles()) {
+    public render(gfx: CanvasRenderingContext2D, time: number): number {
+        let particles = 0;
+        this.particleSystem.forEachParticle(time, ({ idx, ttl, x, y, angle }) => {
             const alpha = Math.min(ttl, 1.0);
-            gfx.fillStyle = `rgba(${[
-                '168,100,253',
-                '41,205,255',
-                '120,255,68',
-                '255,113,141',
-                '253,255,106',
-            ][idx % 5]},${alpha})`;
+            gfx.fillStyle = `rgba(${
+                ["168,100,253", "41,205,255", "120,255,68", "255,113,141", "253,255,106"][idx % 5]
+            },${alpha})`;
             const xOffset = Math.sin(angle) * 30;
             gfx.translate(x + xOffset, y);
             gfx.rotate(angle);
             gfx.fillRect(-5, -3, 10, 6);
             gfx.resetTransform();
-        }
+            particles += 1;
+        });
+        return particles;
     }
 }
 
 type FxState = {
-    canvas: HTMLCanvasElement,
-    gfx: CanvasRenderingContext2D,
-    emitters: Array<Emitter>,
-    active: boolean,
+    canvas: HTMLCanvasElement;
+    gfx: CanvasRenderingContext2D;
+    emitters: Array<Emitter>;
+    active: boolean; // false when destroyed
+    paused: boolean;
+    lastRender: number | null;
 };
 
 type FxContext = {
     shootConfetti: (x: number, y: number, angle: number) => void;
 };
 
-export const FxContext = React.createContext<FxContext>({shootConfetti: () => {}});
+export const FxContext = React.createContext<FxContext>({ shootConfetti: () => {} });
 
-export const FxProvider: React.FC<PropsWithChildren> = ({children}) => {
+export const FxProvider: React.FC<PropsWithChildren> = ({ children }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const confettiRef = useRef<(x: number, y: number, angle: number) => void>();
     useEffect(() => {
@@ -186,63 +168,70 @@ export const FxProvider: React.FC<PropsWithChildren> = ({children}) => {
         const confettiEmitter = new ConfettiEmitter();
         fx.emitters.push(confettiEmitter);
         confettiRef.current = (x: number, y: number, angle: number) => {
-            confettiEmitter.shootConfetti(x, y, angle, 18_000);
+            confettiEmitter.shootConfetti(x, y, angle, 6000, document.timeline.currentTime as number / 1000);
+            startFxLoop(fx);
         };
-        startFxLoop(fx);
         return () => {
             fx.active = false;
-        }
+        };
     }, []);
 
-    const shootConfetti = useCallback((x: number, y: number, angle: number) => {
-        confettiRef.current?.(x, y, angle)
-    }, [confettiRef])
+    const shootConfetti = useCallback(
+        (x: number, y: number, angle: number) => {
+            confettiRef.current?.(x, y, angle);
+        },
+        [confettiRef]
+    );
 
     return (
         <FxContext.Provider value={{ shootConfetti }}>
-            <canvas ref={canvasRef} style={{top: 0, left: 0, position: "fixed", pointerEvents: "none"}}></canvas>
+            <canvas ref={canvasRef} style={{ top: 0, left: 0, position: "fixed", pointerEvents: "none" }}></canvas>
             {children}
         </FxContext.Provider>
     );
 };
 
 function startFxLoop(fx: FxState) {
-    let lastRenderMs = Date.now();
-    const loopImpl = () => {
+    if (!fx.paused) return;
+    fx.paused = false;
+    const loopImpl = (nowMs: number | null) => {
         if (!fx.active) {
             return;
         }
-        const nowMs = Date.now();
-        const timeDeltaMs = nowMs - lastRenderMs;
-        if (timeDeltaMs > 1_000 / FX_FPS) {
+        const now = (nowMs ?? document.timeline.currentTime) as number / 1000;
+        if (fx.lastRender == null || now - fx.lastRender > 1 / FX_FPS) {
+            fx.lastRender = now;
             // Throttle animation, since this is just silly effect
-            renderFxFrame(fx, timeDeltaMs / 1_000);
-            lastRenderMs = nowMs;
+            if (!renderFxFrame(fx, now)) {
+                // No particles left, stop looping.
+                fx.paused = true;
+                return;
+            }
         }
         requestAnimationFrame(loopImpl);
     };
-    loopImpl();
+    loopImpl(null);
 }
 
 function createFxContext(canvas: HTMLCanvasElement): FxState | null {
-    const gfx = canvas.getContext('2d');
+    const gfx = canvas.getContext("2d");
     if (gfx === null) {
         return null;
     }
-    return { canvas, gfx, emitters: [new ConfettiEmitter()], active: true };
+    return { canvas, gfx, emitters: [], active: true, lastRender: null, paused: true };
 }
 
-function renderFxFrame(fx: FxState, timeDeltaS: number) {
+function renderFxFrame(fx: FxState, time: number): number {
     const width = window.innerWidth;
     const height = window.innerHeight;
     fx.canvas.width = width;
     fx.canvas.height = height;
     fx.gfx.clearRect(0, 0, width, height);
 
+    let particles = 0;
     for (const emitter of fx.emitters) {
-        emitter.update(timeDeltaS);
+        particles += emitter.render(fx.gfx, time);
     }
-    for (const emitter of fx.emitters) {
-        emitter.render(fx.gfx);
-    }
+
+    return particles;
 }
