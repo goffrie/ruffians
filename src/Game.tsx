@@ -370,7 +370,7 @@ function ScoringGame(props: ScoringGameProps) {
     }, [playerScores]);
     const { shootConfetti } = useContext(FxContext);
     useEffect(() => {
-        if (true || revealIndex === players.length && gameWon) {
+        if (revealIndex === players.length && gameWon) {
             shootConfetti(0, window.innerHeight, -Math.PI / 2 + 0.3);
             setTimeout(() => {
                 shootConfetti(window.innerWidth, window.innerHeight, -Math.PI / 2 - 0.3);
