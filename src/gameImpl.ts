@@ -3,10 +3,12 @@ import {
     BiddingState,
     BiddingStateWithoutJokers,
     Config,
+    NEW_ROOM,
     RoomPhase,
     SetupPlayer,
     StartedPlayer,
     StartedState,
+    WinRecord,
 } from "./gameState";
 import { CARD_VALUES, DeckCard, PokerCard, Round, SUITS } from "./gameTypes";
 import { shuffle } from "./utils";
@@ -19,7 +21,11 @@ export function makeDeck(withJokers: boolean): DeckCard[] {
 
 export const DEFAULT_GAME: Immutable<Round[]> = [{ cards: 0 }, { cards: 3 }, { cards: 1 }, { cards: 1 }];
 
-export function makeInitialGame(players: Immutable<SetupPlayer[]>, config: Config): Immutable<StartedState> {
+export function makeInitialGame(
+    players: Immutable<SetupPlayer[]>,
+    config: Config,
+    winRecord?: WinRecord
+): Immutable<StartedState> {
     const deck = makeDeck(config.withJokers);
     const state: Immutable<BiddingState> = {
         phase: RoomPhase.BIDDING,
@@ -36,6 +42,12 @@ export function makeInitialGame(players: Immutable<SetupPlayer[]>, config: Confi
         futureRounds: DEFAULT_GAME,
         jokerLog: [],
         log: [],
+        winRecord: winRecord ?? {
+            wins: 0,
+            losses: 0,
+            targetWins: config.targetWins ?? NEW_ROOM.config.targetWins,
+            targetLosses: config.targetLosses ?? NEW_ROOM.config.targetLosses,
+        },
         // start out with null tokens in case we need to resolve jokers
         tokens: players.map(() => null),
     };
@@ -82,6 +94,7 @@ export function advanceRound(game: Immutable<BiddingStateWithoutJokers>): Immuta
             deck: game.deck,
             jokerLog: game.jokerLog,
             log: game.log,
+            winRecord: game.winRecord,
             revealIndex: 1,
         };
     }

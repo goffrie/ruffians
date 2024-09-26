@@ -3,6 +3,7 @@ import { advanceRound, gameHandsAreResolved, makeInitialGame, maybeResolveJokers
 import {
     BiddingState,
     JokerLogEntry,
+    NEW_ROOM,
     RoomPhase,
     RoomState,
     RoundLogEntry,
@@ -10,6 +11,7 @@ import {
     SetupState,
     StartedPlayer,
     StartedState,
+    WinRecord,
 } from "./gameState";
 import { CardValue, DeckCard, Suit, Token } from "./gameTypes";
 import { deepEqual } from "./utils";
@@ -107,7 +109,14 @@ function SetupGame(props: SetupGameProps) {
                 {!inRoom && <button onClick={joinRoom}>Join</button>}
             </div>
             <div>
-                <div className={styles.heading}>Creating game</div>
+                {game.gameState.winRecord && (
+                    <>
+                        <WinRecordView record={game.gameState.winRecord} />
+                        {game.gameState.winRecord.wins === game.gameState.winRecord.targetWins && "You won!"}
+                        {game.gameState.winRecord.losses === game.gameState.winRecord.targetLosses && "You unwon."}
+                    </>
+                )}
+                <div className={styles.heading}>Creating a new game</div>
                 <input
                     type="checkbox"
                     checked={withJokersMutation ?? game.gameState.config.withJokers}
@@ -262,6 +271,7 @@ function BiddingGame(props: BiddingGameProps) {
                 ))}
             </div>
             <div>
+                <WinRecordView record={game.gameState.winRecord} />
                 <div className={styles.heading}>
                     {waitingForJoker
                         ? "Waiting for players to choose their cards"
@@ -334,8 +344,18 @@ function setRevealIndexMutator(game: Immutable<ScoringState>, newRevealIndex: nu
     return { ...game, revealIndex: Math.max(game.revealIndex, newRevealIndex) };
 }
 
-function startNewGameMutator(game: Immutable<ScoringState>): Immutable<StartedState> {
-    return makeInitialGame(game.players, game.config);
+function isWinRecordFinished(record: WinRecord): boolean {
+    return record.wins === record.targetWins || record.losses === record.targetLosses;
+}
+
+function startNextGameMutator(game: Immutable<ScoringState>, newWinRecord: WinRecord): Immutable<RoomState> {
+    if (isWinRecordFinished(newWinRecord)) {
+        return {
+            ...killGameMutator(game),
+            winRecord: newWinRecord,
+        };
+    }
+    return makeInitialGame(game.players, game.config, newWinRecord);
 }
 
 type ScoringGameProps = {
@@ -351,7 +371,7 @@ function ScoringGame(props: ScoringGameProps) {
     );
     const inRoom = players.some((p) => p.name === username);
     const [, setRevealIndex] = useMutateGame(game, setRevealIndexMutator);
-    const [, setStartNewGame] = useMutateGame(game, startNewGameMutator);
+    const [, setStartNextGame] = useMutateGame(game, startNextGameMutator);
     const revealedPlayerIndex = players.findIndex((p) => p.token!.index === revealIndex);
     const revealedPlayerBestHand = new Set(handScores[revealedPlayerIndex][0]);
     const playerScores = useMemo(
@@ -378,6 +398,14 @@ function ScoringGame(props: ScoringGameProps) {
             }, 400);
         }
     }, [doneRevealing, gameWon, shootConfetti]);
+    const nextWinRecord = doneRevealing
+        ? {
+              wins: (game.gameState.winRecord?.wins ?? 0) + (gameWon ? 1 : 0),
+              losses: (game.gameState.winRecord?.losses ?? 0) + (gameWon ? 0 : 1),
+              targetWins: game.gameState.winRecord?.targetWins ?? NEW_ROOM.config.targetWins,
+              targetLosses: game.gameState.winRecord?.targetLosses ?? NEW_ROOM.config.targetLosses,
+          }
+        : game.gameState.winRecord;
     return (
         <div className={styles.container}>
             <div className={styles.players}>
@@ -409,6 +437,7 @@ function ScoringGame(props: ScoringGameProps) {
                 ))}
             </div>
             <div>
+                <WinRecordView record={nextWinRecord} />
                 <div className={styles.heading}>
                     Scoring: {revealIndex} ({players[revealedPlayerIndex].name})
                 </div>
@@ -439,12 +468,14 @@ function ScoringGame(props: ScoringGameProps) {
                         Reveal {revealIndex + 1} ({players.find((p) => p.token!.index === revealIndex + 1)?.name})
                     </button>
                 )}
-                {revealIndex === players.length && (
+                {doneRevealing && (
                     <>
                         <div className={styles.gameResult}>
                             {gameWon ? "You won this one!" : "You didn't wonnered."}
                         </div>
-                        <button onClick={() => setStartNewGame(true)}>Next game</button>
+                        <button onClick={() => setStartNextGame(nextWinRecord)}>
+                            {isWinRecordFinished(nextWinRecord) ? "Finish" : "Next game"}
+                        </button>
                     </>
                 )}
                 <GameLog players={game.gameState.players} jokerLog={game.gameState.jokerLog} log={game.gameState.log} />
@@ -625,4 +656,19 @@ function NoCard() {
 
 function SmallToken({ token }: { token: Token }) {
     return <span className={styles.smallToken}>{token.index}</span>;
+}
+
+function WinRecordView({ record }: { record: WinRecord }) {
+    if (!record) return <></>; // for migration purposes
+    const { wins, losses, targetWins, targetLosses } = record;
+    return (
+        <div className={styles.winRecord}>
+            {Array.from({ length: targetWins }).map((_, i) => (
+                <span key={i} className={i < targetWins - wins ? styles.notWin : styles.win} />
+            ))}
+            {Array.from({ length: targetLosses }).map((_, i) => (
+                <span key={i + targetWins} className={i < losses ? styles.loss : styles.notLoss} />
+            ))}
+        </div>
+    );
 }

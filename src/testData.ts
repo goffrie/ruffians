@@ -1,20 +1,19 @@
 import { Immutable } from "mutative";
 import { GameRoom } from "./gameHook";
 import { DEFAULT_GAME, makeDeck, maybeResolveJokers } from "./gameImpl";
-import { BiddingState, RoomPhase, RoomState, SetupState } from "./gameState";
+import { BiddingState, NEW_ROOM, RoomPhase, RoomState, SetupState } from "./gameState";
 import { PokerCard } from "./gameTypes";
 import { useEffect, useState } from "react";
 
 const starting: SetupState = {
-    phase: RoomPhase.SETUP,
+    ...NEW_ROOM,
     players: [{ name: "player1" }, { name: "player2" }, { name: "player3" }],
-    config: { withJokers: true },
 };
 function makeResolveJokers(): Immutable<RoomState> {
     const deck = makeDeck(false) as PokerCard[];
     return maybeResolveJokers({
         phase: RoomPhase.BIDDING,
-        config: { withJokers: true },
+        config: NEW_ROOM.config,
         players: starting.players.map((p, i) => ({
             name: p.name,
             hand: i === 0 ? [{ joker: 0 }, deck.shift()!] : deck.splice(0, 2),
@@ -27,13 +26,14 @@ function makeResolveJokers(): Immutable<RoomState> {
         jokerLog: [],
         log: [],
         tokens: [null, null, null],
+        winRecord: { wins: 0, losses: 0, targetWins: 3, targetLosses: 3 },
     });
 }
 function makeFinishing(): BiddingState {
     const deck = makeDeck(false) as PokerCard[];
     return {
         phase: RoomPhase.BIDDING,
-        config: { withJokers: true },
+        config: NEW_ROOM.config,
         players: starting.players.map((p, i) => ({
             name: p.name,
             hand: deck.splice(0, 2),
@@ -46,6 +46,7 @@ function makeFinishing(): BiddingState {
         jokerLog: [],
         log: [[]],
         tokens: [null, null, null],
+        winRecord: { wins: 2, losses: 2, targetWins: 3, targetLosses: 3 },
     };
 }
 export const TestRooms: Record<string, () => Immutable<RoomState>> = {

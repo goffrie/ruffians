@@ -12,18 +12,21 @@ export interface SetupPlayer {
 
 export interface Config {
     withJokers: boolean;
+    targetWins: number;
+    targetLosses: number;
 }
 
 export interface SetupState {
     phase: RoomPhase.SETUP;
     players: SetupPlayer[];
     config: Config;
+    winRecord?: WinRecord;
 }
 
 export const NEW_ROOM: SetupState = {
     phase: RoomPhase.SETUP,
     players: [],
-    config: { withJokers: false },
+    config: { withJokers: false, targetWins: 3, targetLosses: 3 },
 };
 
 export interface StartedPlayer<PlayerCard> {
@@ -55,12 +58,20 @@ export interface RoundLogEntry {
           };
 }
 
+export interface WinRecord {
+    wins: number;
+    losses: number;
+    targetWins: number;
+    targetLosses: number;
+}
+
 export interface BaseStartedState<PlayerCard> {
     players: StartedPlayer<PlayerCard>[];
     config: Config;
     communityCards: PokerCard[][];
     deck: DeckCard[];
     jokerLog: JokerLogEntry[];
+    winRecord: WinRecord;
 }
 
 export interface BiddingState<PlayerCard = DeckCard | DeckCard[]> extends BaseStartedState<PlayerCard> {
