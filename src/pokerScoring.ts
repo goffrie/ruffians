@@ -37,11 +37,11 @@ export function scoreHand(inputHand: Cards): Immutable<PokerHand> {
             i === 0 ||
             c.value === hand[i - 1].value + 1 ||
             /* Special case: ace counts as 1 for a straight */ (c.value === CardValue.Ace &&
-                hand[i - 1].value === CardValue.Four)
+                hand[i - 1].value === CardValue.Five)
     );
     const straightValue = isStraight
-        ? hand[4].value === CardValue.Ace && hand[3].value === CardValue.Four
-            ? CardValue.Four
+        ? hand[4].value === CardValue.Ace && hand[3].value === CardValue.Five
+            ? CardValue.Five
             : hand[4].value
         : null;
     if (isFlush && straightValue != null) {
