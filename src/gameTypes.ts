@@ -22,7 +22,6 @@ export enum CardValue {
     King,
 }
 export const CARD_VALUES: readonly CardValue[] = [
-    CardValue.Ace,
     CardValue.Two,
     CardValue.Three,
     CardValue.Four,
@@ -35,6 +34,7 @@ export const CARD_VALUES: readonly CardValue[] = [
     CardValue.Jack,
     CardValue.Queen,
     CardValue.King,
+    CardValue.Ace,
 ];
 
 export type PokerCard = {
