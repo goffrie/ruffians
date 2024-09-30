@@ -9,4 +9,8 @@
         font-weight: inherit;
         font-size: calc(max(10px + 6vmin, 1.2em));
     }
+
+    & .logo {
+        height: calc(max(40px + 36vmin, 1.2em));
+    }
 }

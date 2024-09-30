@@ -1,0 +1,13 @@
+{
+    "plugins": [
+        "collapseGroups",
+        "convertStyleToAttrs",
+        "preset-default",
+        {
+            "name": "removeAttrs",
+            "params": {
+                "attrs": "style|font-family"
+            }
+        }
+    ]
+}
