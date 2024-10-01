@@ -22,6 +22,7 @@ function makeResolveJokers(): Immutable<RoomState> {
         })),
         communityCards: [],
         deck: [{ joker: 1 }, ...deck],
+        pastRounds: [],
         futureRounds: DEFAULT_GAME,
         jokerLog: [],
         log: [],
@@ -29,7 +30,7 @@ function makeResolveJokers(): Immutable<RoomState> {
         winRecord: { wins: 0, losses: 0, targetWins: 3, targetLosses: 3 },
     });
 }
-function makeFinishing(): BiddingState {
+function makeFinishing(): Immutable<BiddingState> {
     const deck = makeDeck(false) as PokerCard[];
     return {
         phase: RoomPhase.BIDDING,
@@ -42,6 +43,7 @@ function makeFinishing(): BiddingState {
         })),
         communityCards: [...deck.splice(0, 4).map((x) => [x]), deck.splice(0, 2)],
         deck,
+        pastRounds: DEFAULT_GAME,
         futureRounds: [],
         jokerLog: [],
         log: [[]],

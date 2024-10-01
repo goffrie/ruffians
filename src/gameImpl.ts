@@ -39,6 +39,7 @@ export function makeInitialGame(
         })),
         communityCards: [],
         deck,
+        pastRounds: [],
         futureRounds: DEFAULT_GAME,
         jokerLog: [],
         log: [],
@@ -95,9 +96,11 @@ export function advanceRound(game: Immutable<BiddingStateWithoutJokers>): Immuta
             jokerLog: game.jokerLog,
             log: game.log,
             winRecord: game.winRecord,
+            pastRounds: game.pastRounds,
             revealIndex: 1,
         };
     }
+    draft.pastRounds.push(currentRound);
 
     // update history bookkeeping for a new round
     const roundIndex = draft.log.length;

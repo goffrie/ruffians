@@ -1,5 +1,5 @@
 import { GameRoom, useGame, useMutateGame } from "./gameHook";
-import { advanceRound, gameHandsAreResolved, makeInitialGame, maybeResolveJokers } from "./gameImpl";
+import { advanceRound, DEFAULT_GAME, gameHandsAreResolved, makeInitialGame, maybeResolveJokers } from "./gameImpl";
 import {
     BiddingState,
     JokerLogEntry,
@@ -19,7 +19,7 @@ import * as styles from "./Game.module.css";
 import { create, Immutable } from "mutative";
 import { bestHandAmong, HandKind, PokerHand, pokerHandLessThan } from "./pokerScoring";
 import { useContext, useEffect, useMemo, useState } from "react";
-import { TokenAnimator, TokenV } from "./TokenV";
+import { TOKEN_STYLES, TokenAnimator, TokenV } from "./TokenV";
 import { FxProvider, FxContext } from "./Fx";
 
 type Props = {
@@ -279,16 +279,7 @@ function BiddingGame(props: BiddingGameProps) {
                     {!inRoom && "(You are spectating.)"}
                     {inRoom && <KillGameButton game={game} />}
                 </div>
-                <div className={styles.communityCards}>
-                    {game.gameState.communityCards.map((c, i) =>
-                        c instanceof Array ? <CardStack cards={c} key={i} /> : <Card card={c} key={i} />
-                    )}
-                    {Array.from({
-                        length: game.gameState.futureRounds.reduce((c, r) => r.cards + c, 0),
-                    }).map((_, i) => (
-                        <NoCard key={i} />
-                    ))}
-                </div>
+                <CommunityCards gameState={game.gameState} />
                 <div className={styles.tokenPool}>
                     {game.gameState.tokens.map((token, i) => (
                         <TokenV
@@ -441,11 +432,7 @@ function ScoringGame(props: ScoringGameProps) {
                 <div className={styles.heading}>
                     Scoring: {revealIndex} ({players[revealedPlayerIndex].name})
                 </div>
-                <div className={styles.communityCards}>
-                    {game.gameState.communityCards.map((c, i) => (
-                        <CardStack cards={c} highlight={revealedPlayerBestHand} key={i} />
-                    ))}
-                </div>
+                <CommunityCards gameState={game.gameState} highlight={revealedPlayerBestHand} />
                 <div className={styles.revealLog}>
                     {playerScores.slice(1, revealIndex).map((p, j) => {
                         const i = j + 1;
@@ -480,6 +467,41 @@ function ScoringGame(props: ScoringGameProps) {
                 )}
                 <GameLog players={game.gameState.players} jokerLog={game.gameState.jokerLog} log={game.gameState.log} />
             </div>
+        </div>
+    );
+}
+
+function CommunityCards({
+    gameState,
+    highlight,
+}: {
+    gameState: Immutable<StartedState>;
+    highlight?: Set<Immutable<DeckCard>>;
+}) {
+    // Group up cards into their rounds
+    const rounds = gameState.pastRounds
+        ? "futureRounds" in gameState
+            ? [...gameState.pastRounds, ...gameState.futureRounds]
+            : gameState.pastRounds
+        : /* migration */ DEFAULT_GAME;
+    let ix = 0;
+    return (
+        <div className={styles.communityCards}>
+            {rounds.map(({ cards }, i) => {
+                const start = ix;
+                const end = ix + cards;
+                ix = end;
+                if (!cards) return;
+                return (
+                    <div className={`${TOKEN_STYLES[i]} ${styles.roundCards} ${start >= gameState.communityCards.length ? styles.futureRound : ""}`} key={i}>
+                        {start < gameState.communityCards.length
+                            ? gameState.communityCards
+                                  .slice(start, end)
+                                  .map((c, j) => <CardStack cards={c} key={j} highlight={highlight} />)
+                            : Array.from({ length: cards }).map((_, j) => <NoCard key={j} />)}
+                    </div>
+                );
+            })}
         </div>
     );
 }

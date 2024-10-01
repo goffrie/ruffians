@@ -21,7 +21,7 @@ export type TokenProps = {
     past?: boolean;
     onClick?: () => void;
 };
-const TOKEN_STYLES = [styles.token1, styles.token2, styles.token3, styles.token4];
+export const TOKEN_STYLES = [styles.token1, styles.token2, styles.token3, styles.token4];
 // how 2 naming?
 export function TokenV(props: TokenProps) {
     const { token, disabled, past, onClick } = props;

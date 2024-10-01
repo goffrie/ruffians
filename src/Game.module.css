@@ -23,6 +23,20 @@
 .hand {
     margin: 4px 0;
 }
+.roundCards {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    border: 2px solid color-mix(in srgb, var(--token-colour) 90%, white);
+    /* background-color: color-mix(in srgb, var(--token-colour) 80%, transparent); */
+    padding: 8px;
+    border-radius: 8px;
+    margin: 8px 0;
+    &.futureRound {
+        border-style: dashed;
+    }
+}
 
 .handScore {
     visibility: visible;
@@ -123,10 +137,10 @@
     justify-content: center;
 }
 .token1 {
-    --token-colour: hsl(153, 65%, 33%);
+    --token-colour: hsl(163, 65%, 33%);
 }
 .token2 {
-    --token-colour: hsl(71, 95%, 28%);
+    --token-colour: hsl(82, 94%, 28%);
 }
 .token3 {
     --token-colour: hsl(28, 89%, 35%);

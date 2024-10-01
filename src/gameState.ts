@@ -77,6 +77,7 @@ export interface BaseStartedState<PlayerCard> {
 export interface BiddingState<PlayerCard = DeckCard | DeckCard[]> extends BaseStartedState<PlayerCard> {
     phase: RoomPhase.BIDDING;
     tokens: (Token | null)[];
+    pastRounds: Round[];
     futureRounds: Round[];
     log: RoundLogEntry[][];
 }
@@ -86,6 +87,7 @@ export interface ScoringState extends BaseStartedState<PokerCard> {
     phase: RoomPhase.SCORING;
     log: RoundLogEntry[][];
     revealIndex: number; // 1-indexed
+    pastRounds: Round[];
 }
 
 export type StartedState = BiddingState | ScoringState;
