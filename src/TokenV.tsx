@@ -21,6 +21,7 @@ export type TokenProps = {
     past?: boolean;
     onClick?: () => void;
 };
+const TOKEN_STYLES = [styles.token1, styles.token2, styles.token3, styles.token4];
 // how 2 naming?
 export function TokenV(props: TokenProps) {
     const { token, disabled, past, onClick } = props;
@@ -62,7 +63,7 @@ export function TokenV(props: TokenProps) {
         <div className={styles.noToken} ref={containerRef}>
             {token && (
                 <button
-                    className={`${styles.token} ${past ? styles.pastToken : ""}`}
+                    className={`${styles.token} ${past ? styles.pastToken : ""} ${TOKEN_STYLES[token.round]}`}
                     disabled={disabled}
                     onClick={onClick}
                     ref={ref}

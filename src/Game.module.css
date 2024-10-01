@@ -107,34 +107,49 @@
     width: 48px;
     height: 48px;
     border-radius: 24px;
-    display: inline-block;
+    display: inline-block !important;
     box-sizing: border-box;
     font: inherit;
-    font-size: 20px;
+    font-size: 22px;
+    font-weight: 550;
     text-align: center;
     /* i do not understand css */
     vertical-align: top;
 }
 .noToken {
     border: 2px dashed white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.token1 {
+    --token-colour: hsl(153, 65%, 33%);
+}
+.token2 {
+    --token-colour: hsl(71, 95%, 28%);
+}
+.token3 {
+    --token-colour: hsl(28, 89%, 35%);
+}
+.token4 {
+    --token-colour: hsl(349, 94%, 35%);
 }
 .token {
     margin: -2px;
-    border: 2px solid white;
-    box-shadow: 0 0 1px white; /* this shadow obscures slight artifacts from the noToken underneath */
 
-    background-color: #570773;
-    color: inherit;
+    border: none;
+    background: url(./token.svg), var(--token-colour);
+    color: black;
     padding: 0;
 }
 .token:hover:not(:disabled) {
-    background: color-mix(in srgb, #570773, white 10%);
+    background: radial-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url(./token.svg), var(--token-colour);
 }
 .token:active:not(:disabled) {
-    background: color-mix(in srgb, #570773, white 20%);
+    background: radial-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url(./token.svg), var(--token-colour);
 }
 .token.pastToken {
-    border-style: dotted;
+    visibility: visible;
 }
 
 .smallToken {

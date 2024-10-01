@@ -37,8 +37,8 @@ function makeFinishing(): BiddingState {
         players: starting.players.map((p, i) => ({
             name: p.name,
             hand: deck.splice(0, 2),
-            pastTokens: [],
-            token: { index: i + 1, round: 0 },
+            pastTokens: Array.from({ length: 3 }).map((_, j) => ({ round: j, index: i + 1 })),
+            token: { index: i + 1, round: 3 },
         })),
         communityCards: [...deck.splice(0, 4).map((x) => [x]), deck.splice(0, 2)],
         deck,
