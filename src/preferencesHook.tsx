@@ -1,11 +1,11 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 export type Preferences = {
-    fourColorSuits: boolean;
+    fourColourSuits: boolean;
 };
 
 const DEFAULT_PREFERENCES: Preferences = {
-    fourColorSuits: false,
+    fourColourSuits: false,
 };
 
 const STORAGE_KEY = "ruffians-preferences";
@@ -49,9 +49,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <PreferencesContext.Provider value={{ preferences, setPreferences }}>
-            {children}
-        </PreferencesContext.Provider>
+        <PreferencesContext.Provider value={{ preferences, setPreferences }}>{children}</PreferencesContext.Provider>
     );
 }
 

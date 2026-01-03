@@ -16,15 +16,12 @@ export function PreferencesPanel(props: PreferencesProps) {
                 <div className={styles.option}>
                     <input
                         type="checkbox"
-                        id="fourColorSuits"
-                        checked={preferences.fourColorSuits}
-                        onChange={(e) => setPreferences({ fourColorSuits: e.target.checked })}
+                        id="fourColourSuits"
+                        checked={preferences.fourColourSuits}
+                        onChange={(e) => setPreferences({ fourColourSuits: e.target.checked })}
                     />
-                    <label htmlFor="fourColorSuits">Four-color suits</label>
-                    <p className={styles.description}>
-                        Display each suit in a different color (clubs: blue, diamonds: orange, hearts: red, spades:
-                        gray) using Balatro Joker colors instead of traditional two colors.
-                    </p>
+                    <label htmlFor="fourColourSuits">Four-colour suits</label>
+                    <p className={styles.description}>Display each suit in a different colour.</p>
                 </div>
                 <button onClick={onClose}>Close</button>
             </div>

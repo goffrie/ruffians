@@ -256,11 +256,11 @@ function BiddingGame(props: BiddingGameProps) {
                                         <CardStack
                                             cards={c}
                                             onClick={p.name === username ? selectCard : undefined}
-                                            fourColorSuits={preferences.fourColorSuits}
+                                            fourColourSuits={preferences.fourColourSuits}
                                             key={i}
                                         />
                                     ) : (
-                                        <Card card={c} fourColorSuits={preferences.fourColorSuits} key={i} />
+                                        <Card card={c} fourColourSuits={preferences.fourColourSuits} key={i} />
                                     )
                                 ) : (
                                     <NoCard key={i} />
@@ -293,7 +293,7 @@ function BiddingGame(props: BiddingGameProps) {
                     {inRoom && <KillGameButton game={game} />}
                     <button onClick={() => setShowPreferences(true)}>⚙</button>
                 </div>
-                <CommunityCards gameState={game.gameState} fourColorSuits={preferences.fourColorSuits} />
+                <CommunityCards gameState={game.gameState} fourColourSuits={preferences.fourColourSuits} />
                 <div className={styles.tokenPool}>
                     {game.gameState.tokens.map((token, i) => (
                         <TokenV
@@ -431,7 +431,7 @@ function ScoringGame(props: ScoringGameProps) {
                                     <Card
                                         card={c}
                                         highlight={revealedPlayerBestHand.has(c)}
-                                        fourColorSuits={preferences.fourColorSuits}
+                                        fourColourSuits={preferences.fourColourSuits}
                                         key={i}
                                     />
                                 ) : (
@@ -458,7 +458,7 @@ function ScoringGame(props: ScoringGameProps) {
                 <CommunityCards
                     gameState={game.gameState}
                     highlight={revealedPlayerBestHand}
-                    fourColorSuits={preferences.fourColorSuits}
+                    fourColourSuits={preferences.fourColourSuits}
                 />
                 <div className={styles.revealLog}>
                     {playerScores.slice(1, revealIndex).map((p, j) => {
@@ -502,11 +502,11 @@ function ScoringGame(props: ScoringGameProps) {
 function CommunityCards({
     gameState,
     highlight,
-    fourColorSuits,
+    fourColourSuits,
 }: {
     gameState: Immutable<StartedState>;
     highlight?: Set<Immutable<DeckCard>>;
-    fourColorSuits?: boolean;
+    fourColourSuits?: boolean;
 }) {
     // Group up cards into their rounds
     const rounds = gameState.pastRounds
@@ -523,11 +523,21 @@ function CommunityCards({
                 ix = end;
                 if (!cards) return;
                 return (
-                    <div className={`${TOKEN_STYLES[i]} ${styles.roundCards} ${start >= gameState.communityCards.length ? styles.futureRound : ""}`} key={i}>
+                    <div
+                        className={`${TOKEN_STYLES[i]} ${styles.roundCards} ${start >= gameState.communityCards.length ? styles.futureRound : ""}`}
+                        key={i}
+                    >
                         {start < gameState.communityCards.length
                             ? gameState.communityCards
                                   .slice(start, end)
-                                  .map((c, j) => <CardStack cards={c} key={j} highlight={highlight} fourColorSuits={fourColorSuits} />)
+                                  .map((c, j) => (
+                                      <CardStack
+                                          cards={c}
+                                          key={j}
+                                          highlight={highlight}
+                                          fourColourSuits={fourColourSuits}
+                                      />
+                                  ))
                             : Array.from({ length: cards }).map((_, j) => <NoCard key={j} />)}
                     </div>
                 );
@@ -654,14 +664,14 @@ const UNICODE_SUITS = {
     [Suit.Spades]: "♠",
 };
 
-const FOUR_COLOR_SUIT_STYLES = {
+const FOUR_COLOUR_SUIT_STYLES = {
     [Suit.Clubs]: styles.clubsSuit,
     [Suit.Diamonds]: styles.diamondsSuit,
     [Suit.Hearts]: styles.heartsSuit,
     [Suit.Spades]: styles.spadesSuit,
 };
 
-const TWO_COLOR_SUIT_STYLES = {
+const TWO_COLOUR_SUIT_STYLES = {
     [Suit.Clubs]: styles.blackSuit,
     [Suit.Diamonds]: styles.redSuit,
     [Suit.Hearts]: styles.redSuit,
@@ -672,10 +682,10 @@ function Card(props: {
     card: Immutable<DeckCard>;
     onClick?: () => void;
     highlight?: boolean;
-    fourColorSuits?: boolean;
+    fourColourSuits?: boolean;
 }) {
-    const { card, onClick, highlight, fourColorSuits = true } = props;
-    const suitStyles = fourColorSuits ? FOUR_COLOR_SUIT_STYLES : TWO_COLOR_SUIT_STYLES;
+    const { card, onClick, highlight, fourColourSuits = true } = props;
+    const suitStyles = fourColourSuits ? FOUR_COLOUR_SUIT_STYLES : TWO_COLOUR_SUIT_STYLES;
     return (
         <div
             className={`${styles.card} ${highlight ? styles.cardHighlight : ""} ${
@@ -700,9 +710,9 @@ function CardStack(props: {
     cards: Immutable<DeckCard[]>;
     onClick?: (card: DeckCard, index: number) => void;
     highlight?: Set<Immutable<DeckCard>>;
-    fourColorSuits?: boolean;
+    fourColourSuits?: boolean;
 }) {
-    const { cards, onClick, highlight, fourColorSuits } = props;
+    const { cards, onClick, highlight, fourColourSuits } = props;
     return (
         <div className={styles.cardStack}>
             {cards.map((card, i) => (
@@ -710,7 +720,7 @@ function CardStack(props: {
                     card={card}
                     onClick={onClick != null ? () => onClick(card, i) : undefined}
                     highlight={highlight?.has(card)}
-                    fourColorSuits={fourColorSuits}
+                    fourColourSuits={fourColourSuits}
                     key={i}
                 />
             ))}
