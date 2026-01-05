@@ -60,12 +60,12 @@
     background-color: #fff;
     color: #000;
 
-    font-size: 20px;
+    font-size: 18px;
     text-align: center;
-    line-height: 15px;
+    line-height: 16px;
 }
 .card::first-line {
-    font-size: 18px;
+    font-size: 19px;
 }
 .cardJoker {
     font-size: 28px;
