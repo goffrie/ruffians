@@ -110,9 +110,14 @@ function SetupGame(props: SetupGameProps) {
     return (
         <div className={styles.container}>
             <div className={styles.players}>
-                {game.gameState.players.map((p) => (
+                {game.gameState.players.map((p, pi) => (
                     <div className={styles.player} key={p.name}>
-                        <span className={styles.playerName}>{p.name}</span>
+                        <span
+                            className={styles.playerName}
+                            style={p.name === username ? {} : { color: playerColour(pi) }}
+                        >
+                            {p.name}
+                        </span>
                         {inRoom && (
                             <>
                                 {" "}
@@ -286,9 +291,14 @@ function BiddingGame(props: BiddingGameProps) {
     return (
         <div className={styles.container}>
             <div className={styles.players}>
-                {game.gameState.players.map((p) => (
+                {game.gameState.players.map((p, pi) => (
                     <div className={styles.player} key={p.name}>
-                        <span className={styles.playerName}>{p.name}</span>
+                        <span
+                            className={styles.playerName}
+                            style={p.name === username ? {} : { color: playerColour(pi) }}
+                        >
+                            {p.name}
+                        </span>
                         {process.env.NODE_ENV !== "production" && p.name !== username && (
                             <button onClick={() => setUsername(p.name)}>Impersonate</button>
                         )}
@@ -362,7 +372,12 @@ function BiddingGame(props: BiddingGameProps) {
                 >
                     {game.gameState.futureRounds.length === 0 ? "Finish" : "Next round"}
                 </button>
-                <GameLog players={game.gameState.players} jokerLog={game.gameState.jokerLog} log={game.gameState.log} />
+                <GameLog
+                    players={game.gameState.players}
+                    jokerLog={game.gameState.jokerLog}
+                    log={game.gameState.log}
+                    username={username}
+                />
             </div>
             {showPreferences && <PreferencesPanel onClose={() => setShowPreferences(false)} />}
         </div>
@@ -475,12 +490,17 @@ function ScoringGame(props: ScoringGameProps) {
     return (
         <div className={styles.container}>
             <div className={styles.players}>
-                {players.map((p, i) => (
+                {players.map((p, pi) => (
                     <div
-                        className={`${styles.player} ${i === revealedPlayerIndex ? styles.highlightPlayer : ""}`}
+                        className={`${styles.player} ${pi === revealedPlayerIndex ? styles.highlightPlayer : ""}`}
                         key={p.name}
                     >
-                        <span className={styles.playerName}>{p.name}</span>
+                        <span
+                            className={styles.playerName}
+                            style={p.name === username ? {} : { color: playerColour(pi) }}
+                        >
+                            {p.name}
+                        </span>
                         {p.name === username && " (You)"}
                         <br />
                         <div className={styles.hand}>
@@ -502,7 +522,7 @@ function ScoringGame(props: ScoringGameProps) {
                             <TokenV token={p.token!} disabled={true} />
                         </div>
                         <div className={styles.handScore}>
-                            {p.token!.index <= revealIndex ? formatScore(handScores[i][1]) : <>&nbsp;</>}
+                            {p.token!.index <= revealIndex ? formatScore(handScores[pi][1]) : <>&nbsp;</>}
                         </div>
                     </div>
                 ))}
@@ -551,7 +571,12 @@ function ScoringGame(props: ScoringGameProps) {
                         </button>
                     </>
                 )}
-                <GameLog players={game.gameState.players} jokerLog={game.gameState.jokerLog} log={game.gameState.log} />
+                <GameLog
+                    players={game.gameState.players}
+                    jokerLog={game.gameState.jokerLog}
+                    log={game.gameState.log}
+                    username={username}
+                />
             </div>
             {showPreferences && <PreferencesPanel onClose={() => setShowPreferences(false)} />}
         </div>
@@ -609,10 +634,12 @@ function GameLog({
     players,
     jokerLog,
     log,
+    username,
 }: {
     players: Immutable<StartedPlayer<object>[]>;
     jokerLog: Immutable<JokerLogEntry[]>;
     log: Immutable<RoundLogEntry[][]>;
+    username: string;
 }) {
     return (
         <>
@@ -633,7 +660,18 @@ function GameLog({
                         <h2>Round {roundIndex + 1}</h2>
                         {roundLog.map((logEntry, i) => (
                             <div className={styles.roundLogEntry} key={i}>
-                                <span className={styles.playerName}>{players[logEntry.player].name}</span>
+                                <span
+                                    className={styles.playerName}
+                                    style={
+                                        players[logEntry.player].name === username
+                                            ? {}
+                                            : {
+                                                  color: playerColour(logEntry.player),
+                                              }
+                                    }
+                                >
+                                    {players[logEntry.player].name}
+                                </span>
                                 {"take" in logEntry.action ? (
                                     <>
                                         {" "}
@@ -641,7 +679,16 @@ function GameLog({
                                         {logEntry.action.from == null ? (
                                             <>the middle</>
                                         ) : (
-                                            <span className={styles.playerName}>
+                                            <span
+                                                className={styles.playerName}
+                                                style={
+                                                    players[logEntry.action.from].name === username
+                                                        ? {}
+                                                        : {
+                                                              color: playerColour(logEntry.action.from),
+                                                          }
+                                                }
+                                            >
                                                 {players[logEntry.action.from].name}
                                             </span>
                                         )}
@@ -665,6 +712,10 @@ function GameLog({
             </div>
         </>
     );
+}
+
+function playerColour(i: number): string {
+    return `hsl(${190 + i * 137} 90 80)`;
 }
 
 const BREAK: Record<HandKind, number | null> = {
