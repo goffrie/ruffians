@@ -1,20 +1,23 @@
 import { Immutable } from "mutative";
 import { GameRoom } from "./gameHook";
 import { DEFAULT_GAME, makeDeck, maybeResolveJokers } from "./gameImpl";
-import { BiddingState, NEW_ROOM, RoomPhase, RoomState, SetupState } from "./gameState";
+import { BiddingState, NEW_ROOM, RoomPhase, RoomState } from "./gameState";
 import { PokerCard } from "./gameTypes";
 import { useEffect, useState } from "react";
 
-const starting: SetupState = {
-    ...NEW_ROOM,
-    players: [{ name: "player1" }, { name: "player2" }, { name: "player3" }],
-};
-function makeResolveJokers(): Immutable<RoomState> {
+function starting(args: string): Immutable<RoomState> {
+    const n = parseInt(args || "3");
+    return {
+        ...NEW_ROOM,
+        players: Array.from({ length: n }).map((_, i) => ({ name: `player${i + 1}` })),
+    };
+}
+function makeResolveJokers(args: string): Immutable<RoomState> {
     const deck = makeDeck(false) as PokerCard[];
     return maybeResolveJokers({
         phase: RoomPhase.BIDDING,
         config: NEW_ROOM.config,
-        players: starting.players.map((p, i) => ({
+        players: starting(args).players.map((p, i) => ({
             name: p.name,
             hand: i === 0 ? [{ joker: 0 }, deck.shift()!] : deck.splice(0, 2),
             pastTokens: [],
@@ -30,12 +33,12 @@ function makeResolveJokers(): Immutable<RoomState> {
         winRecord: { wins: 0, losses: 0, targetWins: 3, targetLosses: 3 },
     });
 }
-function makeFinishing(): Immutable<BiddingState> {
+function makeFinishing(args: string): Immutable<BiddingState> {
     const deck = makeDeck(false) as PokerCard[];
     return {
         phase: RoomPhase.BIDDING,
         config: NEW_ROOM.config,
-        players: starting.players.map((p, i) => ({
+        players: starting(args).players.map((p, i) => ({
             name: p.name,
             hand: deck.splice(0, 2),
             pastTokens: Array.from({ length: 3 }).map((_, j) => ({ round: j, index: i + 1 })),
@@ -51,8 +54,8 @@ function makeFinishing(): Immutable<BiddingState> {
         winRecord: { wins: 2, losses: 2, targetWins: 3, targetLosses: 3 },
     };
 }
-export const TestRooms: Record<string, () => Immutable<RoomState>> = {
-    starting: () => starting,
+export const TestRooms: Record<string, (args: string) => Immutable<RoomState>> = {
+    starting: starting,
     resolveJokers: makeResolveJokers,
     finishing: makeFinishing,
 };
@@ -68,7 +71,7 @@ if (module.hot) {
     });
 }
 
-export function useFakeGame(roomName: string): Immutable<GameRoom> | null {
+export function useFakeGame(roomName: string, args: string): Immutable<GameRoom> | null {
     const [state, setState] = useState<Immutable<GameRoom> | null>(null);
     useEffect(() => {
         if (!Object.prototype.hasOwnProperty.call(TestRooms, roomName)) return;
@@ -82,7 +85,7 @@ export function useFakeGame(roomName: string): Immutable<GameRoom> | null {
             });
         };
         if (!(roomName in STATE)) {
-            STATE[roomName] = TestRooms[roomName]();
+            STATE[roomName] = TestRooms[roomName](args);
         }
         setState({
             roomName,
@@ -90,6 +93,6 @@ export function useFakeGame(roomName: string): Immutable<GameRoom> | null {
             stateVersion: 1,
             setGameState: makeSetGameState(1),
         });
-    }, [roomName]);
+    }, [roomName, args]);
     return state;
 }

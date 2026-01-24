@@ -14,8 +14,9 @@ export type GameRoom<State = RoomState> = {
 
 function useDevGame(roomName: string): Immutable<GameRoom> | null {
     // not really my favourite
-    const useFake = Object.prototype.hasOwnProperty.call(TestRooms, roomName);
-    const fake = useFakeGame(roomName);
+    const [a, b] = roomName.split("/", 2);
+    const useFake = Object.prototype.hasOwnProperty.call(TestRooms, a);
+    const fake = useFakeGame(a, b ?? "");
     const real = useRealGame(useFake ? "" : roomName);
     return useFake ? fake : real;
 }
