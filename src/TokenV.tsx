@@ -20,11 +20,13 @@ export type TokenProps = {
     disabled?: boolean;
     past?: boolean;
     onClick?: () => void;
+    onContextMenu?: (e: React.MouseEvent) => void;
+    title?: string;
 };
 export const TOKEN_STYLES = [styles.token1, styles.token2, styles.token3, styles.token4];
 // how 2 naming?
 export function TokenV(props: TokenProps) {
-    const { token, disabled, past, onClick } = props;
+    const { token, disabled, past, onClick, onContextMenu, title } = props;
     const animatorContext = useContext(TokenAnimatorContext);
     const containerRef = useRef<HTMLDivElement>(null);
     const ref = useRef<HTMLButtonElement>(null);
@@ -60,12 +62,13 @@ export function TokenV(props: TokenProps) {
         return () => observer.disconnect();
     }, [token, animatorContext]);
     return (
-        <div className={styles.noToken} ref={containerRef}>
+        <div className={styles.noToken} ref={containerRef} onContextMenu={onContextMenu}>
             {token && (
                 <button
                     className={`${styles.token} ${past ? styles.pastToken : ""} ${TOKEN_STYLES[token.round]}`}
                     disabled={disabled}
                     onClick={onClick}
+                    title={title}
                     ref={ref}
                 >
                     {token.index}

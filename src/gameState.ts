@@ -86,6 +86,7 @@ export interface BiddingState<PlayerCard = DeckCard | DeckCard[]> extends BaseSt
     pastRounds: Round[];
     futureRounds: Round[];
     log: RoundLogEntry[][];
+    notes?: Record<string, Record<string, string>>;
 }
 export type BiddingStateWithoutJokers = BiddingState<PokerCard>;
 
@@ -94,6 +95,7 @@ export interface ScoringState extends BaseStartedState<PokerCard> {
     log: RoundLogEntry[][];
     revealIndex: number; // 1-indexed
     pastRounds: Round[];
+    notes?: Record<string, Record<string, string>>;
 }
 
 export type StartedState = BiddingState | ScoringState;

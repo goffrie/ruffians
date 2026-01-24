@@ -263,3 +263,42 @@ button.token:active:not(:disabled) {
         color: rgba(0, 0, 0, 0.3);
     }
 }
+
+.notesSection {
+    margin: 16px 0;
+    padding: 16px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.notesSection h3 {
+    margin-top: 0;
+}
+
+.playerNotes {
+    margin-bottom: 16px;
+}
+
+.playerNotes h4 {
+    margin: 8px 0 4px 0;
+    font-size: 16px;
+}
+
+.noteEntry {
+    display: flex;
+    gap: 8px;
+    margin: 4px 0;
+    padding: 4px 8px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.noteToken {
+    font-weight: bold;
+    color: #aaa;
+    min-width: 140px;
+}
+
+.noteText {
+    color: #fff;
+}

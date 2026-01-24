@@ -100,6 +100,7 @@ export function advanceRound(game: Immutable<BiddingStateWithoutJokers>): Immuta
             winRecord: game.winRecord,
             pastRounds: game.pastRounds,
             revealIndex: 1,
+            notes: game.notes,
         };
     }
     draft.pastRounds.push(currentRound);

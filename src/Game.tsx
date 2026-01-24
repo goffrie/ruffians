@@ -23,6 +23,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { TOKEN_STYLES, TokenAnimator, TokenV } from "./TokenV";
 import { FxProvider, FxContext } from "./Fx";
 import { PreferencesPanel, usePreferences, PreferencesProvider } from "./Preferences";
+import { NoteModal } from "./NoteModal";
 
 type Props = {
     username: string;
@@ -251,6 +252,30 @@ function moveTokenMutator(
     });
 }
 
+function addNoteMutator(
+    game: Immutable<BiddingState>,
+    [username, tokenKey, noteText]: [string, string, string]
+): Immutable<BiddingState> {
+    return create(game, (draft) => {
+        if (!draft.notes) {
+            draft.notes = {};
+        }
+        if (!draft.notes[username]) {
+            draft.notes[username] = {};
+        }
+        if (noteText.trim() === "") {
+            // Delete note if empty
+            delete draft.notes[username][tokenKey];
+            // Clean up empty user entries
+            if (Object.keys(draft.notes[username]).length === 0) {
+                delete draft.notes[username];
+            }
+        } else {
+            draft.notes[username][tokenKey] = noteText;
+        }
+    });
+}
+
 function advanceRoundMutator(game: Immutable<BiddingState>): Immutable<RoomState> {
     if (!gameHandsAreResolved(game)) return game;
     if (!game.tokens.every((t) => t == null)) return game;
@@ -281,13 +306,36 @@ function BiddingGame(props: BiddingGameProps) {
     const inRoom = game.gameState.players.some((p) => p.name === username);
     const [preferences] = usePreferences();
     const [showPreferences, setShowPreferences] = useState(false);
+    const [noteModalState, setNoteModalState] = useState<{ round: number; playerName: string } | null>(null);
     const [, setSelectCard] = useMutateGame(game, selectCardMutator);
     const selectCard = (card: DeckCard, index: number) => {
         setSelectCard([username, card, index]);
     };
     const [, setMoveToken] = useMutateGame(game, moveTokenMutator);
+    const [, setAddNote] = useMutateGame(game, addNoteMutator);
     const [, setAdvanceRound] = useMutateGame(game, advanceRoundMutator);
     const waitingForJoker = !gameHandsAreResolved(game.gameState);
+
+    const getNoteKey = (playerName: string, round: number) => `${round}::${playerName}`;
+    const currentRound = game.gameState.log.length - 1;
+
+    const handlePlayerRightClick = (e: React.MouseEvent, playerName: string) => {
+        e.preventDefault();
+        setNoteModalState({ round: currentRound, playerName });
+    };
+
+    const handleSaveNote = (noteText: string) => {
+        if (noteModalState) {
+            const noteKey = getNoteKey(noteModalState.playerName, noteModalState.round);
+            setAddNote([username, noteKey, noteText]);
+        }
+    };
+
+    const getCurrentNote = (playerName: string, round: number): string => {
+        const noteKey = getNoteKey(playerName, round);
+        return game.gameState.notes?.[username]?.[noteKey] ?? "";
+    };
+
     return (
         <div className={styles.container}>
             <div className={styles.players}>
@@ -322,7 +370,13 @@ function BiddingGame(props: BiddingGameProps) {
                                 )
                             )}
                             {p.pastTokens.map((t, i) => (
-                                <TokenV token={t} past={true} disabled={true} key={i} />
+                                <TokenV
+                                    token={t}
+                                    past={true}
+                                    disabled={true}
+                                    title={getCurrentNote(p.name, t.round) || undefined}
+                                    key={i}
+                                />
                             ))}
                             {!waitingForJoker && (
                                 <TokenV
@@ -331,6 +385,7 @@ function BiddingGame(props: BiddingGameProps) {
                                     onClick={() =>
                                         setMoveToken([username, username === p.name ? null : p.token, p.name])
                                     }
+                                    onContextMenu={(e) => handlePlayerRightClick(e, p.name)}
                                 />
                             )}
                             {game.gameState.futureRounds.map((_, i) => (
@@ -380,6 +435,15 @@ function BiddingGame(props: BiddingGameProps) {
                 />
             </div>
             {showPreferences && <PreferencesPanel onClose={() => setShowPreferences(false)} />}
+            {noteModalState && (
+                <NoteModal
+                    round={noteModalState.round}
+                    playerName={noteModalState.playerName}
+                    currentNote={getCurrentNote(noteModalState.playerName, noteModalState.round)}
+                    onSave={handleSaveNote}
+                    onClose={() => setNoteModalState(null)}
+                />
+            )}
         </div>
     );
 }
@@ -440,6 +504,12 @@ function ScoringGame(props: ScoringGameProps) {
     const { players, communityCards, revealIndex } = game.gameState;
     const [preferences] = usePreferences();
     const [showPreferences, setShowPreferences] = useState(false);
+
+    const getNoteKey = (playerName: string, round: number) => `${round}::${playerName}`;
+    const getCurrentNote = (playerName: string, round: number): string => {
+        const noteKey = getNoteKey(playerName, round);
+        return game.gameState.notes?.[username]?.[noteKey] ?? "";
+    };
     const handScores = useMemo(
         () =>
             players.map((p) => {
@@ -517,7 +587,13 @@ function ScoringGame(props: ScoringGameProps) {
                                 )
                             )}
                             {p.pastTokens.map((t, i) => (
-                                <TokenV token={t} past={true} disabled={true} key={i} />
+                                <TokenV
+                                    token={t}
+                                    past={true}
+                                    disabled={true}
+                                    title={getCurrentNote(p.name, t.round) || undefined}
+                                    key={i}
+                                />
                             ))}
                             <TokenV token={p.token!} disabled={true} />
                         </div>
@@ -566,6 +642,27 @@ function ScoringGame(props: ScoringGameProps) {
                         <div className={styles.gameResult}>
                             {gameWon ? "You won this one!" : "You didn't wonnered."}
                         </div>
+                        {game.gameState.notes && Object.keys(game.gameState.notes).length > 0 && (
+                            <div className={styles.notesSection}>
+                                <h3>Player Notes</h3>
+                                {Object.entries(game.gameState.notes).map(([noteAuthor, authorNotes]) => (
+                                    <div key={noteAuthor} className={styles.playerNotes}>
+                                        <h4>{noteAuthor}&apos;s notes:</h4>
+                                        {Object.entries(authorNotes).map(([noteKey, noteText]) => {
+                                            const [round, notedPlayer] = noteKey.split("::");
+                                            return (
+                                                <div key={noteKey} className={styles.noteEntry}>
+                                                    <span className={styles.noteToken}>
+                                                        Round {Number(round) + 1} - {notedPlayer}:
+                                                    </span>
+                                                    <span className={styles.noteText}>{noteText}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                         <button onClick={() => setStartNextGame(nextWinRecord)}>
                             {isWinRecordFinished(nextWinRecord) ? "Finish" : "Next game"}
                         </button>
